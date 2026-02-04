@@ -1,0 +1,82 @@
+import { memo, useMemo } from 'react';
+
+function Skills() {
+  const skillCategories = useMemo(() => [
+    {
+      category: 'Programming & Frameworks',
+      skills: ['Python', 'Bash', 'SQL', 'Git', 'REST APIs', 'Linux', 'Docker', 'CI/CD'],
+      gradient: 'from-ai-primary to-ai-secondary',
+    },
+    {
+      category: 'Computer Vision & AI',
+      skills: ['OpenCV', 'YOLO', 'SSD', 'Face Recognition', 'Image Segmentation', 'Pose Estimation', 'TensorFlow', 'PyTorch'],
+      gradient: 'from-ai-secondary to-ai-accent',
+    },
+    {
+      category: 'MLOps & Deployment',
+      skills: ['ONNX', 'TensorRT', 'NVIDIA Jetson', 'Edge AI', 'AWS (EC2, Lambda, S3)', 'GitHub Actions', 'Model Optimization'],
+      gradient: 'from-ai-accent to-ai-primary',
+    },
+    {
+      category: 'Generative AI & NLP',
+      skills: ['GANs', 'RAG', 'LLMs (OpenAI, Hugging Face)', 'Transformers', 'NLTK', 'Vertex AI', 'Gemini API'],
+      gradient: 'from-ai-primary to-ai-accent',
+    },
+    {
+      category: 'Video & Streaming',
+      skills: ['FFmpeg', 'H.264/H.265', 'RTSP/WebRTC', 'Real-time Analytics', 'CUDA/cuDNN', 'Low-latency Streaming'],
+      gradient: 'from-ai-secondary to-ai-primary',
+    },
+    {
+      category: 'Tools & Platforms',
+      skills: ['Label Studio', 'LabelImg', 'Streamlit', 'Dataiku', 'Power BI', 'Agile & Scrum', 'Technical Mentoring'],
+      gradient: 'from-ai-accent to-ai-secondary',
+    },
+  ], []);
+
+  return (
+    <section id="skills" className="py-16 sm:py-20 lg:py-24 relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900">
+      <div className="absolute inset-0 ai-grid opacity-3"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-ai-primary/1 via-transparent to-ai-secondary/1"></div>
+
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-10 sm:mb-12 lg:mb-16 reveal">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 sm:mb-4">
+              <span className="gradient-text">Technical Skills</span>
+            </h2>
+            <div className="h-0.5 w-16 sm:w-20 md:w-24 bg-gradient-to-r from-ai-primary via-ai-secondary to-ai-accent mx-auto rounded-full"></div>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+            {skillCategories.map((category, index) => (
+              <div
+                key={index}
+                className="glass rounded-2xl sm:rounded-3xl p-5 sm:p-6 hover-lift group reveal"
+                style={{ animationDelay: `${index * 0.05}s` }}
+              >
+                <div className="mb-3 sm:mb-4">
+                  <h3 className={`text-base sm:text-lg lg:text-xl font-bold bg-gradient-to-r ${category.gradient} bg-clip-text text-transparent group-hover:scale-105 transition-transform duration-300 inline-block`}>
+                    {category.category}
+                  </h3>
+                </div>
+                <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                  {category.skills.map((skill, skillIndex) => (
+                    <span
+                      key={skillIndex}
+                      className="px-2 sm:px-2.5 py-1 sm:py-1.5 bg-slate-800/80 text-slate-300 rounded-lg text-xs border border-slate-700 hover:border-ai-primary/50 hover:text-ai-primary hover:bg-ai-primary/10 transition-colors duration-200 cursor-default"
+                    >
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export default memo(Skills);
