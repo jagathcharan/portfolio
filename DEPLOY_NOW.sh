@@ -108,7 +108,24 @@ fi
 # Step 10: Set branch to main (create if doesn't exist)
 git branch -M main 2>/dev/null || git checkout -b main
 
-# Step 11: Push to GitHub
+# Step 11: Pull remote changes if they exist
+echo ""
+echo -e "${YELLOW}🔄 Checking for remote changes...${NC}"
+if git ls-remote --heads origin main | grep -q main; then
+    echo -e "${YELLOW}📥 Remote branch exists, pulling changes...${NC}"
+    git pull origin main --allow-unrelated-histories --no-edit || {
+        echo -e "${YELLOW}⚠️  Merge conflict or pull failed. Attempting to merge...${NC}"
+        git pull origin main --no-rebase --allow-unrelated-histories || {
+            echo -e "${YELLOW}⚠️  Using merge strategy...${NC}"
+            git pull origin main --strategy-option=theirs --allow-unrelated-histories || true
+        }
+    }
+    echo -e "${GREEN}✅ Remote changes integrated${NC}"
+else
+    echo -e "${GREEN}✅ No remote branch, will create new one${NC}"
+fi
+
+# Step 12: Push to GitHub
 echo ""
 echo -e "${YELLOW}📤 Pushing to GitHub...${NC}"
 git push -u origin main
@@ -117,9 +134,10 @@ if [ $? -ne 0 ]; then
     echo -e "${RED}❌ Push failed!${NC}"
     echo ""
     echo "Possible solutions:"
-    echo "1. Check your GitHub authentication"
-    echo "2. Use Personal Access Token if password doesn't work"
-    echo "3. Verify repository exists: https://github.com/jagathcharan/portfolio"
+    echo "1. Pull and merge manually: git pull origin main --allow-unrelated-histories"
+    echo "2. Force push (use with caution): git push -u origin main --force"
+    echo "3. Check your GitHub authentication"
+    echo "4. Use Personal Access Token if password doesn't work"
     exit 1
 fi
 
