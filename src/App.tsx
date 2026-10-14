@@ -1,4 +1,4 @@
-import { useEffect, lazy, Suspense, useCallback } from 'react';
+import { useEffect, lazy, Suspense, useCallback, useState } from 'react';
 import Navigation from './components/Navigation';
 import Hero from './components/Hero';
 import About from './components/About';
@@ -14,16 +14,18 @@ const FloatingResumeButton = lazy(() => import('./components/FloatingResumeButto
 const AIChat = lazy(() => import('./components/AIChat'));
 
 function App() {
+  const [deferChrome, setDeferChrome] = useState(false);
+
   useEffect(() => {
     document.title =
       'Vankayala Jagath Charan | Machine Learning Engineer · Computer Vision · Edge AI · RAG · MLOps | Bengaluru';
-    
+
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-    
+
     if ('scrollRestoration' in history) {
       history.scrollRestoration = 'manual';
     }
-    
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -52,17 +54,22 @@ function App() {
     });
     mutationObserver.observe(document.body, { childList: true, subtree: true });
 
+    // Defer chat / floating chrome until idle so LCP (hero text) wins the main thread.
+    const ric = window.requestIdleCallback;
+    const idleId = ric
+      ? ric(() => setDeferChrome(true), { timeout: 2000 })
+      : window.setTimeout(() => setDeferChrome(true), 1200);
+
     return () => {
       mutationObserver.disconnect();
       observer.disconnect();
+      if (ric) window.cancelIdleCallback(idleId as number);
+      else window.clearTimeout(idleId as number);
     };
   }, []);
 
   const handleContactClick = useCallback(() => {
-    const contactSection = document.querySelector('#contact');
-    if (contactSection) {
-      contactSection.scrollIntoView({ behavior: 'smooth' });
-    }
+    document.querySelector('#contact')?.scrollIntoView({ behavior: 'smooth' });
   }, []);
 
   return (
@@ -73,7 +80,7 @@ function App() {
         <div className="absolute top-[60%] left-[10%] w-64 h-64 bg-amber-400/8 rounded-full blur-3xl" />
         <div className="absolute inset-0 ai-grid opacity-[0.045]" />
       </div>
-      
+
       <Navigation />
       <main>
         <Hero onContactClick={handleContactClick} />
@@ -85,13 +92,15 @@ function App() {
           <Projects />
           <Certifications />
           <Contact />
+          <Footer />
         </Suspense>
       </main>
-      <Suspense fallback={null}>
-        <Footer />
-        <FloatingResumeButton />
-        <AIChat />
-      </Suspense>
+      {deferChrome && (
+        <Suspense fallback={null}>
+          <FloatingResumeButton />
+          <AIChat />
+        </Suspense>
+      )}
     </div>
   );
 }

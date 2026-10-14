@@ -3,39 +3,36 @@ import react from '@vitejs/plugin-react';
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  // Base path for GitHub Pages deployment
   base: '/portfolio/',
   plugins: [react()],
   optimizeDeps: {
-    exclude: ['lucide-react'],
-    include: ['react', 'react-dom'],
+    include: ['react', 'react-dom', 'lucide-react'],
   },
   build: {
-    // Optimize build output
+    cssCodeSplit: true,
+    cssMinify: true,
+    modulePreload: { polyfill: false },
     rollupOptions: {
       output: {
         manualChunks: {
-          // Separate vendor chunks for better caching
           'react-vendor': ['react', 'react-dom'],
-          'lucide-icons': ['lucide-react'],
         },
       },
     },
-    // Optimize chunk size
     chunkSizeWarningLimit: 1000,
-    // Enable minification
     minify: 'terser',
     terserOptions: {
       compress: {
-        drop_console: true, // Remove console.log in production
+        drop_console: true,
         drop_debugger: true,
+        passes: 2,
       },
     },
+    target: 'es2020',
   },
-  // Performance optimizations
   server: {
     hmr: {
-      overlay: false, // Disable error overlay for better performance
+      overlay: false,
     },
   },
 });

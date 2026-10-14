@@ -211,10 +211,14 @@ function Experience() {
                   className="group relative min-h-[200px] sm:min-h-[260px] lg:min-h-full block overflow-hidden"
                 >
                   <img
-                    src="https://visionbot.com/wp-content/uploads/2026/03/visionbot-expo2026-1-1024x458.jpg"
+                    src={`${import.meta.env.BASE_URL}images/expo-2026.jpg`}
                     alt="India Electronics Expo 2026 — Amvar Data Tech / VisionBot"
+                    width={1024}
+                    height={458}
                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                     loading="lazy"
+                    decoding="async"
+                    fetchPriority="low"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-slate-950/20" />
                   <div className="absolute inset-0 bg-gradient-to-r from-slate-950/40 via-transparent to-transparent lg:from-slate-950/60" />

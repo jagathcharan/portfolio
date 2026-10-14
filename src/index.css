@@ -137,6 +137,17 @@
     @apply relative overflow-hidden;
   }
 
+  /* Skip layout/paint for offscreen sections — helps INP/main-thread work */
+  #roles,
+  #experience,
+  #skills,
+  #projects,
+  #certifications,
+  #contact {
+    content-visibility: auto;
+    contain-intrinsic-size: 1px 800px;
+  }
+
   .section-pad {
     @apply py-14 sm:py-20 lg:py-28;
   }
