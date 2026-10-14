@@ -73,7 +73,7 @@ function Projects() {
             <p className="text-slate-400 text-sm sm:text-base max-w-xl mx-auto px-2">
               Independent builds across AI, computer vision, and data systems
             </p>
-            <div className="h-1 w-16 sm:w-20 bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-400 mx-auto rounded-full mt-4"></div>
+            <div className="h-1 w-16 sm:w-20 bg-gradient-to-r from-sky-400 via-cyan-400 to-teal-400 mx-auto rounded-full mt-4"></div>
           </div>
 
           <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 md:gap-6">
@@ -83,12 +83,12 @@ function Projects() {
                 className="glass hover-lift rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 group reveal flex flex-col relative overflow-hidden"
                 style={{ animationDelay: `${index * 0.05}s` }}
               >
-                <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-400 opacity-60 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-sky-400 via-cyan-400 to-teal-400 opacity-70 group-hover:opacity-100 transition-opacity" />
                 <div className="flex items-start justify-between mb-3 gap-2">
-                  <h3 className="font-display text-sm sm:text-base md:text-lg font-bold text-white group-hover:text-sky-300 transition-colors flex-1">
+                  <h3 className="font-display text-sm sm:text-base md:text-lg font-bold text-white group-hover:text-cyan-300 transition-colors flex-1">
                     {project.title}
                   </h3>
-                  <ExternalLink size={15} className="text-sky-400 opacity-0 group-hover:opacity-100 transition-all duration-300 flex-shrink-0 mt-1" />
+                  <ExternalLink size={15} className="text-cyan-400 opacity-0 group-hover:opacity-100 transition-all duration-300 flex-shrink-0 mt-1" />
                 </div>
 
                 <p className="text-slate-400 mb-3 sm:mb-4 leading-relaxed text-[11px] sm:text-xs md:text-sm line-clamp-4 flex-grow">

@@ -36,7 +36,7 @@ function About() {
             <h2 className="font-display text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4">
               <span className="gradient-text">About Me</span>
             </h2>
-            <div className="h-1 w-16 sm:w-20 bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-400 mx-auto rounded-full" />
+            <div className="h-1 w-16 sm:w-20 bg-gradient-to-r from-sky-400 via-cyan-400 to-teal-400 mx-auto rounded-full" />
             <p className="mt-5 max-w-3xl mx-auto text-slate-300 text-sm sm:text-base md:text-lg lg:text-xl font-medium leading-relaxed px-1">
               Machine Learning Engineer with 17+ months of startup experience building and deploying production AI products across computer vision, Edge AI, RAG, Python backends, and MLOps.
             </p>

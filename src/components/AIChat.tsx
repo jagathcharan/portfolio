@@ -1,794 +1,396 @@
-import { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send, Bot, User, Mail } from 'lucide-react';
-import { generateLocalAIResponse } from '../utils/localAI';
-import { fuzzyContains } from '../utils/fuzzyMatch';
+import { useState, useRef, useEffect, useCallback, memo } from 'react';
+import { MessageCircle, X, Send, Bot, User, Sparkles } from 'lucide-react';
+import { generateLocalAIResponse, type ChatReply } from '../utils/localAI';
+import { suggestedQuestions } from '../utils/siteKnowledge';
+import { EMAIL, buildMailto, buildWhatsAppSendUrl } from '../utils/contact';
+import { sendEmail } from '../utils/emailService';
 
 interface Message {
   id: string;
   text: string;
   sender: 'user' | 'ai';
   timestamp: Date;
+  suggestions?: string[];
 }
 
-interface VisitorInfo {
-  name: string;
-  email: string;
-  company: string;
-  message: string;
+type ContactFlow = 'idle' | 'asking_name' | 'asking_email' | 'asking_message';
+
+function renderRichText(text: string) {
+  return text.split('\n').map((line, i) => {
+    const parts = line.split(/(\*\*[^*]+\*\*)/g).map((part, j) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return (
+          <strong key={j} className="text-sky-200 font-semibold">
+            {part.slice(2, -2)}
+          </strong>
+        );
+      }
+      return <span key={j}>{part}</span>;
+    });
+    return (
+      <span key={i} className="block min-h-[0.85em]">
+        {parts}
+      </span>
+    );
+  });
 }
 
-export default function AIChat() {
-  const [isOpen, setIsOpen] = useState(true);
+function AIChat() {
+  const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: "Hello! I'm an AI assistant representing Vankayala Jagath Charan. I can help answer questions about his skills, experience, projects, certifications, or availability. How can I assist you today?",
+      text: "Hi — I'm Jagath's portfolio assistant. Ask about his Machine Learning / Edge AI / RAG work, experience, projects, or how to reach him.",
       sender: 'ai',
       timestamp: new Date(),
+      suggestions: suggestedQuestions.slice(0, 4),
     },
   ]);
   const [input, setInput] = useState('');
-  const [showInfoForm, setShowInfoForm] = useState(false);
-  const [contactFlow, setContactFlow] = useState<'idle' | 'asking_name' | 'asking_email' | 'asking_message'>('idle');
-  const [visitorInfo, setVisitorInfo] = useState<VisitorInfo>({
-    name: '',
-    email: '',
-    company: '',
-    message: '',
-  });
+  const [contactFlow, setContactFlow] = useState<ContactFlow>('idle');
+  const [visitorInfo, setVisitorInfo] = useState({ name: '', email: '', message: '' });
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
-  // Handle scroll to minimize chat with optimized throttling
   useEffect(() => {
-    if (!isOpen) return; // Only listen when chat is open
-    
-    let ticking = false;
-    let scrollTimeout: NodeJS.Timeout;
-    let lastScrollY = window.scrollY;
-    let lastUpdateTime = Date.now();
-    
-    const handleScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          const now = Date.now();
-          const scrollY = window.scrollY;
-          const scrollDelta = scrollY - lastScrollY;
-          
-          // Throttle updates to max once per 100ms
-          if (now - lastUpdateTime > 100 || Math.abs(scrollDelta) > 20) {
-            lastScrollY = scrollY;
-            lastUpdateTime = now;
-            
-            // Clear any existing timeout
-            clearTimeout(scrollTimeout);
-            
-            // If scrolled down significantly and chat is open, minimize
-            if (scrollDelta > 30 && scrollY > 50 && isOpen) {
-              scrollTimeout = setTimeout(() => {
-                setIsOpen(false);
-              }, 600);
-            }
-          }
-          
-          ticking = false;
-        });
-        ticking = true;
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      clearTimeout(scrollTimeout);
-    };
-  }, [isOpen]);
-
-  const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  }, [messages, isTyping]);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    if (isOpen) inputRef.current?.focus();
+  }, [isOpen, contactFlow]);
 
-  useEffect(() => {
-    if (isOpen && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [isOpen]);
-
-  // Site content knowledge base
-  const siteContent = {
-    name: "Vankayala Jagath Charan",
-    title: "AI/ML Engineer | Software & System Architecture | Data Engineering & Security",
-    specialization: "AI/ML engineering, system design, software architecture, data engineering, security, computer vision, edge AI, RAG, and real-time video analytics",
-    email: "Jagathcharan2004@gmail.com",
-    phone: "+91 9198198123",
-    location: "Bengaluru, India",
-    company: "Amvar Data Tech Pvt. Ltd.",
-    role: "Software Developer – Machine Learning",
-    startDate: "October 2024",
-    education: {
-      degree: "Bachelor of Technology (B.Tech), Computer Science and Engineering",
-      university: "M S Ramaiah University of Applied Sciences",
-      period: "2021 - 2025",
-      location: "Bengaluru"
-    },
-    skills: {
-      programming: ["Python", "FastAPI", "REST APIs", "React", "Bash", "SQL", "Git", "Linux (Ubuntu)", "Data Structures & Algorithms", "Object-Oriented Design"],
-      computerVision: ["Object Detection", "Face Recognition", "Pose Estimation", "Image Segmentation", "OpenCV", "YOLO (v4/v5/v8)", "SSD", "MediaPipe", "FFmpeg", "H.264/H.265", "RTSP/WebRTC/FLV"],
-      mlops: ["MLflow", "DVC", "Docker", "CI/CD (GitHub Actions)", "Model Deployment", "Experiment Tracking", "AWS (EC2, Lambda, S3)", "NVIDIA Jetson", "Raspberry Pi", "CUDA/cuDNN"],
-      generativeAI: ["TensorFlow", "PyTorch", "Scikit-learn", "GANs", "Transformers", "ONNX", "TensorRT", "RAG", "LLMs (OpenAI, Hugging Face, LLaMA)", "LangChain", "Prompt Engineering"],
-      video: ["FFmpeg", "H.264/H.265 Encoding", "RTSP/WebRTC/FLV Streaming", "Object Detection", "Face Recognition"],
-      tools: ["SQL", "Databricks", "AWS S3", "ETL Pipelines", "Apache Airflow", "MySQL", "PostgreSQL", "Power BI", "Label Studio", "LabelImg", "Agile/Scrum", "Team Leadership", "Technical Hiring"]
-    },
-    projects: [
+  const pushAi = useCallback((text: string, suggestions?: string[]) => {
+    setMessages((prev) => [
+      ...prev,
       {
-        title: "AI-Based Calling Assistant (Virtual Friend)",
-        description: "Built a voice-based, emotionally aware AI assistant using FastAPI, Twilio, and Leema memory model to provide real-time conversation and multilingual support. Developed by Vankayala Jagath Charan, this RAG (Retrieval-Augmented Generation) application leverages advanced AI techniques to deliver personalized mental wellness and companionship experiences with contextual memory summarization.",
-        tech: ["FastAPI", "Twilio", "Leema", "NLP", "Voice AI", "RAG"],
-        role: "Full Stack AI Developer",
-        impact: "Designed for mental wellness and companionship with contextual memory summarization and personalization. Features RAG architecture for enhanced conversational intelligence and knowledge retrieval."
+        id: `${Date.now()}-ai`,
+        text,
+        sender: 'ai',
+        timestamp: new Date(),
+        suggestions,
       },
-      {
-        title: "Custom Face Recognition System",
-        description: "Developed a CNN-based custom face recognition system involving data generation from video splits, annotation, and model training.",
-        tech: ["CNN", "PyTorch", "OpenCV", "Computer Vision"],
-        role: "ML Engineer",
-        impact: "Enabled robust single-person identification from real-world footage"
-      },
-      {
-        title: "Visual Question Answering (VQA) System",
-        description: "Built a multimodal AI model that answers natural language questions based on image content using the COCO dataset.",
-        tech: ["CNN", "LSTM", "TensorFlow", "Multimodal AI"],
-        role: "Research & Development",
-        impact: "Combined image processing with NLP for intelligent visual understanding"
-      },
-      {
-        title: "Real-Time Video Streaming & Analytics",
-        description: "Built a low-latency video streaming pipeline using FFmpeg (H.264/H.265) over RTSP, WebRTC, FLV, and HTTPS with YOLO/OpenCV for live object detection.",
-        tech: ["FFmpeg", "YOLO", "CUDA", "TensorRT", "NVIDIA Jetson"],
-        role: "Senior ML Developer",
-        impact: "Reduced latency by 35% and improved throughput by 40%"
-      },
-      {
-        title: "YOLOv4 Object Detection Web App",
-        description: "Built a Streamlit app integrating YOLOv4 with Darknet to detect objects in images/videos with bounding box comparison capabilities.",
-        tech: ["YOLOv4", "Streamlit", "Darknet", "GPU Optimization"],
-        role: "Full Stack ML Developer",
-        impact: "Real-time object detection with optimized GPU performance"
-      },
-      {
-        title: "Pharma Sales ETL & Reporting Platform",
-        description: "Built an end-to-end ETL pipeline from AWS S3 to MySQL with DAG scheduling, profiling, and transformation.",
-        tech: ["AWS S3", "MySQL", "Dataiku", "Python", "Power BI"],
-        role: "Data Engineer",
-        impact: "Created comprehensive dashboards with KPIs including market share and territory-wise performance"
-      }
-    ],
-    achievements: [
-      "Defined system design and software architecture for a flagship Edge AI Server platform serving 50+ enterprise clients across retail, industrial safety, and residential security",
-      "Served as corporate representative at India Electronics Expo (IEE) and IndiaSoft 2026, presenting to 500+ industry stakeholders (visionbot.com/india-expo)",
-      "Managed and mentored a team of 10+ developers; conducted 15+ technical interviews",
-      "Built secure deployment framework with E2E encryption and OTA updates across 200+ edge devices",
-      "Developed facial recognition at 98.5% accuracy and 80+ FPS offline on edge devices",
-      "Built production RAG knowledge assistant deployed offline across legal and technical domains",
-      "Engineered sub-200ms video streaming with FFmpeg across RTSP, WebRTC, FLV, and HTTPS",
-      "Optimized inference with CUDA, TensorRT, and ONNX — 35% latency reduction, 40% throughput gain",
-      "Performed end-to-end data migration across SQL, Databricks, and AWS S3 with Airflow ETL pipelines",
-      "Built CI/CD with GitHub Actions and Docker for testing, model versioning, and deployment validation",
-      "Created custom annotation tools cutting data preparation time by 60%",
-      "Drove Agile delivery consistently 15% ahead of schedule; multiple performance-based increments in 17 months"
-    ],
-    certifications: [
-      { name: "Google Gen AI Academy", provider: "Google", skills: "Vertex AI, Gemini API, Imagen, Streamlit, Multimodal RAG" },
-      { name: "End-to-End MLOps Bootcamp", provider: "Krish Naik, Udemy", skills: "MLflow, DVC, Docker, Airflow, SageMaker, Hugging Face" },
-      { name: "Machine Learning Specialization", provider: "Andrew Ng, Coursera", skills: "Supervised & Unsupervised Learning, Neural Networks" },
-      { name: "Advanced Python Development", provider: "Udemy", skills: "100 Coding Challenges, Complete Python Developer" },
-      { name: "Blockchain Technology", provider: "Coursera", skills: "Distributed Systems, Smart Contracts" },
-      { name: "Google Cloud Skill Badges", provider: "Google", skills: "Gemini & Streamlit, Vertex AI, Multimodal RAG, Imagen, Prompt Design" }
-    ],
-    languages: ["English", "Telugu", "Kannada", "Tamil", "Hindi"]
-  };
+    ]);
+    setIsTyping(false);
+  }, []);
 
-  // Enhanced AI Response Generator with fuzzy matching and local AI
-  const generateAIResponse = (userMessage: string): string => {
-    const lowerMessage = userMessage.toLowerCase().trim();
-    const words = lowerMessage.split(/\s+/);
-    
-    // Get recent conversation context for better responses
-    const recentMessages = messages.slice(-3).map(m => m.text.toLowerCase());
-    
-    // Use local AI with fuzzy matching for better typo tolerance
-    try {
-      const localAIResponse = generateLocalAIResponse(userMessage, {
-        siteContent,
-        conversationHistory: recentMessages
-      });
-      
-      // If local AI provides a good response, use it
-      if (localAIResponse && localAIResponse.length > 20) {
-        return localAIResponse;
-      }
-    } catch (error) {
-      console.warn('Local AI error, using fallback:', error);
-    }
-    
-    // Fallback to enhanced rule-based with fuzzy matching
-    // Greetings - Enhanced with fuzzy matching for typos
-    if (fuzzyContains(lowerMessage, ['hi', 'hello', 'hey', 'greetings', 'good morning', 'good afternoon', 'good evening', 'good night', 'sup', 'what\'s up', 'howdy', 'namaste', 'hii', 'helloo'], 0.7)) {
-      const greetings = [
-        `Hello! Nice to meet you. I'm here to help you learn more about ${siteContent.name}'s expertise in ${siteContent.specialization}. What would you like to know?`,
-        `Hi there! I can help you learn about ${siteContent.name}'s skills, projects, and experience. How can I assist you today?`,
-        `Hello! Welcome! I'm here to answer questions about ${siteContent.name}'s professional background. What interests you most?`
-      ];
-      return greetings[Math.floor(Math.random() * greetings.length)];
-    }
+  const answerQuestion = useCallback(
+    (userInput: string) => {
+      const history = messages.slice(-6).map((m) => m.text.toLowerCase());
+      const lower = userInput.toLowerCase();
 
-    // Skills/Expertise questions - Enhanced with fuzzy matching
-    if (fuzzyContains(lowerMessage, ['skill', 'expertise', 'what can', 'capabilities', 'technologies', 'tech stack', 'tools', 'programming', 'python', 'opencv', 'yolo', 'tensorflow', 'pytorch', 'what technologies', 'what tools', 'what languages', 'proficient', 'knows', 'familiar', 'experienced in', 'good at', 'specializes', 'expert'], 0.7)) {
-      // Check for specific technology mentions
-      if (lowerMessage.match(/\b(python|opencv|yolo|tensorflow|pytorch|docker|aws|git|linux|bash|sql|rest|api)\b/)) {
-        const tech = lowerMessage.match(/\b(python|opencv|yolo|tensorflow|pytorch|docker|aws|git|linux|bash|sql|rest|api)\b/)?.[0];
-        if (tech === 'python' || tech === 'opencv' || tech === 'yolo' || tech === 'tensorflow' || tech === 'pytorch') {
-          return `Yes! ${siteContent.name} has extensive experience with ${tech}. He uses it for ${tech === 'python' ? 'building AI/ML applications, APIs, and data pipelines' : tech === 'opencv' ? 'computer vision tasks, image processing, and video analytics' : tech === 'yolo' ? 'real-time object detection and computer vision applications' : 'deep learning model development and training'}. Would you like to know about specific projects using ${tech}?`;
-        }
-      }
-      return `${siteContent.name} specializes in:\n\n• Programming & Frameworks: ${siteContent.skills.programming.join(', ')}\n• Computer Vision & AI: ${siteContent.skills.computerVision.join(', ')}\n• MLOps & Deployment: ${siteContent.skills.mlops.join(', ')}\n• Generative AI & NLP: ${siteContent.skills.generativeAI.join(', ')}\n• Video & Streaming: ${siteContent.skills.video.join(', ')}\n• Tools & Platforms: ${siteContent.skills.tools.join(', ')}\n\nWould you like more details about any specific area?`;
-    }
-
-    // Experience questions - Enhanced with fuzzy matching
-    if (fuzzyContains(lowerMessage, ['experience', 'work', 'job', 'position', 'role', 'current', 'where does', 'company', 'amvar', 'achievement', 'accomplishment', 'experinec', 'exp', 'work experience', 'professional', 'years of experience', 'how long', 'career', 'background', 'work history', 'employment', 'currently working', 'where work'], 0.7)) {
-      // Check if asking about years of experience
-      if (lowerMessage.match(/\b(years|how long|experience|exp)\b/)) {
-        return `${siteContent.name} has been working as a ${siteContent.role} at ${siteContent.company} since ${siteContent.startDate}. He has extensive hands-on experience in AI/ML development, computer vision, and building production-ready applications. His experience includes leading edge AI projects, developing RAG applications, and deploying models to production.`;
-      }
-      return `${siteContent.name} is currently a ${siteContent.role} at ${siteContent.company} since ${siteContent.startDate}. Key achievements include:\n\n• ${siteContent.achievements[0]}\n• ${siteContent.achievements[1]}\n• ${siteContent.achievements[2]}\n• ${siteContent.achievements[3]}\n\nWould you like to know about specific projects or more achievements?`;
-    }
-
-    // Projects questions - Enhanced with fuzzy matching
-    if (fuzzyContains(lowerMessage, ['project', 'work', 'built', 'developed', 'created', 'portfolio', 'virtual friend', 'face recognition', 'vqa', 'streaming', 'yolo', 'pharma', 'etl', 'projects', 'what projects', 'show projects', 'list projects', 'what has', 'what did', 'built', 'made', 'worked on', 'portfolio', 'showcase'], 0.7)) {
-      // Check for specific project mentions
-      if (lowerMessage.match(/\b(virtual friend|calling assistant|voice ai|rag|retrieval)\b/)) {
-        const p = siteContent.projects[0];
-        return `${p.title}\n\n${p.description}\n\nRole: ${p.role}\nImpact: ${p.impact}\nTechnologies: ${p.tech.join(', ')}\n\nThis project demonstrates ${siteContent.name}'s expertise in RAG (Retrieval-Augmented Generation) and conversational AI.`;
-      }
-      const projectList = siteContent.projects.map((p, i) => 
-        `${i + 1}. ${p.title}\n   ${p.description.substring(0, 120)}...\n   Technologies: ${p.tech.slice(0, 4).join(', ')}`
-      ).join('\n\n');
-      return `Here are ${siteContent.name}'s featured projects:\n\n${projectList}\n\nWould you like detailed information about any specific project?`;
-    }
-
-    // About Jagath questions - Enhanced with fuzzy matching
-    if (fuzzyContains(lowerMessage, ['about', 'who is', 'tell me about', 'jagath', 'vankayala', 'introduce', 'background', 'info', 'information', 'who', 'what is', 'describe', 'summary', 'overview'], 0.7)) {
-      return `About ${siteContent.name}:\n\n${siteContent.name} is a ${siteContent.title} specializing in ${siteContent.specialization}.\n\nCurrently working as ${siteContent.role} at ${siteContent.company} since ${siteContent.startDate}.\n\nEducation: ${siteContent.education.degree} from ${siteContent.education.university} (${siteContent.education.period})\n\nLocation: ${siteContent.location}\n\nHe has extensive experience in AI/ML, computer vision, edge AI deployment, and building production-ready applications. Would you like to know more about his skills, projects, or experience?`;
-    }
-
-    // Availability/Hiring questions - Enhanced with fuzzy matching
-    if (fuzzyContains(lowerMessage, ['available', 'hiring', 'job', 'opportunity', 'position', 'open', 'looking', 'interested', 'recruit', 'connect', 'want to connect', 'contact', 'get in touch', 'hire', 'recruiting', 'open to', 'seeking', 'searching for', 'need', 'want', 'looking for', 'position available', 'role', 'vacancy'], 0.7)) {
-      if (contactFlow === 'idle') {
+      if (
+        contactFlow === 'idle' &&
+        (/\b(connect|leave a message|send (him )?a message|contact flow)\b/.test(lower) ||
+          lower === 'send a message')
+      ) {
         setContactFlow('asking_name');
-        return `Great! ${siteContent.name} is open to new opportunities and collaborations. He's particularly interested in roles involving AI/ML, computer vision, edge AI, and RAG applications.\n\nI'd love to help you connect with him. To get started, could you please tell me your name?`;
+        pushAi(
+          "Sure — I'll collect a short intro for Jagath.\n\nWhat's your **name**?",
+          undefined
+        );
+        return;
       }
-    }
 
-    // Contact questions - Enhanced with fuzzy matching
-    if (fuzzyContains(lowerMessage, ['contact', 'email', 'phone', 'reach', 'get in touch', 'connect', 'linkedin', 'github', 'want to contact', 'reach out', 'how to contact', 'contact info', 'contact details', 'email address', 'phone number', 'social media', 'profile'], 0.7)) {
-      if (contactFlow === 'idle') {
-        if (lowerMessage.match(/\b(email|email address|mail)\b/)) {
-          return `You can reach ${siteContent.name} at ${siteContent.email}. Would you like me to help you send a message?`;
-        }
-        if (lowerMessage.match(/\b(phone|number|call|mobile)\b/)) {
-          return `${siteContent.name}'s phone number is ${siteContent.phone}. For professional inquiries, email is preferred: ${siteContent.email}`;
-        }
-        if (lowerMessage.match(/\b(linkedin|github|social|profile)\b/)) {
-          return `I'd be happy to help you connect with ${siteContent.name}! To get started, could you please tell me your name?`;
-        }
+      const reply: ChatReply = generateLocalAIResponse(userInput, history);
+
+      if (
+        contactFlow === 'idle' &&
+        /\b(hire|recruit|opportunity|open to|available for)\b/.test(lower) &&
+        /\b(yes|connect|contact)\b/.test(lower)
+      ) {
         setContactFlow('asking_name');
-        return `I'd be happy to help you connect with ${siteContent.name}!\n\nEmail: ${siteContent.email}\nPhone: ${siteContent.phone}\n\nOr I can help you send a message. To get started, could you please tell me your name?`;
+        pushAi(
+          `${reply.text}\n\nIf you'd like, share your **name** and I'll take a message.`,
+          ['Skip — just email', ...((reply.suggestions || []).slice(0, 2))]
+        );
+        return;
       }
-    }
 
-    // Education questions - Enhanced with fuzzy matching
-    if (fuzzyContains(lowerMessage, ['education', 'degree', 'university', 'college', 'qualification', 'background', 'ramaiah', 'studied', 'graduated', 'alumni', 'bachelor', 'btech', 'btech', 'cs', 'computer science', 'where studied', 'where graduated'], 0.7)) {
-      return `${siteContent.name} holds a ${siteContent.education.degree} from ${siteContent.education.university} (${siteContent.education.period}), ${siteContent.education.location}.\n\nHe has also completed numerous certifications including:\n• Google's Gen AI Academy\n• Machine Learning by Andrew Ng (Coursera)\n• End-to-End MLOps Bootcamp\n• Multiple Google Skill Badges in Generative AI\n\nThese certifications demonstrate his commitment to continuous learning in AI/ML.`;
-    }
+      pushAi(reply.text, reply.suggestions);
+    },
+    [contactFlow, messages, pushAi]
+  );
 
-    // Certifications questions - Enhanced with fuzzy matching
-    if (fuzzyContains(lowerMessage, ['certification', 'certified', 'course', 'training', 'learned', 'badge', 'google', 'gen ai', 'mlops', 'certificate', 'completed', 'took', 'studied', 'learned', 'courses', 'certifications'], 0.7)) {
-      const certList = siteContent.certifications.slice(0, 8).map(c => 
-        `• ${c.name} (${c.provider})`
-      ).join('\n');
-      return `${siteContent.name} has completed several certifications and courses:\n\n${certList}\n\nThese demonstrate his commitment to continuous learning in AI/ML, MLOps, and modern software development practices.`;
-    }
+  const handleSend = async (raw?: string) => {
+    const userInput = (raw ?? input).trim();
+    if (!userInput || isTyping) return;
 
-    // General AI/ML questions - Enhanced with fuzzy matching
-    if (fuzzyContains(lowerMessage, ['ai', 'machine learning', 'ml', 'deep learning', 'neural', 'model', 'algorithm', 'computer vision', 'edge ai', 'artificial intelligence', 'neural network', 'cnn', 'lstm', 'transformer', 'yolo', 'opencv'], 0.7)) {
-      // Check for specific AI topics
-      if (lowerMessage.match(/\b(computer vision|cv|opencv|yolo|object detection|face recognition|image)\b/)) {
-        return `${siteContent.name} has extensive expertise in Computer Vision:\n\n• Technologies: ${siteContent.skills.computerVision.join(', ')}\n• Projects: Custom Face Recognition System, YOLOv4 Object Detection, Visual Question Answering\n• Experience: Real-time object detection, pose estimation, image segmentation, and video analytics\n\nHe has built production-ready CV applications using OpenCV, YOLO, and custom CNN models.`;
-      }
-      if (lowerMessage.match(/\b(rag|retrieval|generative|llm|gpt|gemini|chatbot|conversational)\b/)) {
-        return `${siteContent.name} has strong expertise in Generative AI and RAG:\n\n• Technologies: ${siteContent.skills.generativeAI.join(', ')}\n• Key Project: AI-Based Calling Assistant (Virtual Friend) - a RAG-based voice assistant\n• Experience: Building conversational AI, knowledge retrieval systems, and LLM integration\n\nHe's completed Google's Gen AI Academy and multiple certifications in this area.`;
-      }
-      if (lowerMessage.match(/\b(edge|deployment|mlops|onnx|tensorrt|jetson|production|inference)\b/)) {
-        return `${siteContent.name} specializes in MLOps and Edge AI:\n\n• Technologies: ${siteContent.skills.mlops.join(', ')}\n• Experience: Model optimization, ONNX conversion, TensorRT deployment, edge device integration\n• Achievements: Deployed models on NVIDIA Jetson, optimized for low-latency inference\n\nHe has hands-on experience with end-to-end ML pipelines from training to production deployment.`;
-      }
-      return `${siteContent.name} has deep expertise in AI and Machine Learning:\n\n• Computer Vision: ${siteContent.skills.computerVision.slice(0, 5).join(', ')}\n• Deep Learning: CNNs, LSTMs, Transformers, GANs\n• MLOps: ${siteContent.skills.mlops.slice(0, 5).join(', ')}\n• Edge AI: Deploying models on edge devices like ${siteContent.skills.mlops[2]}\n• Generative AI: ${siteContent.skills.generativeAI.slice(0, 5).join(', ')}\n\nWhat specific aspect interests you?`;
-    }
-
-    // Salary/Compensation questions - Enhanced with fuzzy matching
-    if (fuzzyContains(lowerMessage, ['salary', 'compensation', 'pay', 'rate', 'budget', 'cost', 'package', 'ctc', 'lpa', 'expected', 'expectation', 'remuneration', 'stipend'], 0.7)) {
-      return `For compensation and salary discussions, it's best to connect directly with ${siteContent.name}. He's open to discussing competitive packages based on the role, responsibilities, and market standards.\n\nWould you like to share details about the opportunity? I can help you connect with him.`;
-    }
-
-    // Location questions - Enhanced with fuzzy matching
-    if (fuzzyContains(lowerMessage, ['location', 'where', 'remote', 'onsite', 'hybrid', 'relocate', 'bengaluru', 'bangalore', 'india', 'based', 'located', 'work location', 'work from', 'wfh', 'work from home', 'office', 'workplace'], 0.7)) {
-      if (lowerMessage.match(/\b(remote|wfh|work from home|work from)\b/)) {
-        return `${siteContent.name} is currently based in ${siteContent.location} and is open to remote opportunities. He has experience working remotely and can effectively collaborate across time zones.`;
-      }
-      if (lowerMessage.match(/\b(onsite|office|hybrid|relocate)\b/)) {
-        return `${siteContent.name} is currently based in ${siteContent.location}. He's open to:\n\n• On-site positions in Bengaluru\n• Hybrid work arrangements\n• Relocation for the right opportunity\n\nWhat type of arrangement are you offering?`;
-      }
-      return `${siteContent.name} is currently based in ${siteContent.location}. He's open to:\n\n• Remote opportunities\n• On-site positions in Bengaluru\n• Hybrid work arrangements\n• Relocation for the right opportunity\n\nWhat type of arrangement are you offering?`;
-    }
-
-    // Timeline/Start date questions - Enhanced with fuzzy matching
-    if (fuzzyContains(lowerMessage, ['when', 'start', 'available', 'timeline', 'notice period', 'join', 'begin', 'joining', 'when can', 'when will', 'availability', 'start date', 'joining date', 'immediate', 'urgent'], 0.7)) {
-      if (lowerMessage.match(/\b(immediate|urgent|asap|soon|quick)\b/)) {
-        return `${siteContent.name}'s availability depends on the opportunity and notice period requirements. He's currently working at ${siteContent.company}, so there may be a standard notice period. For urgent requirements, please share the details and he'll do his best to accommodate.`;
-      }
-      return `${siteContent.name}'s availability depends on the opportunity and notice period requirements. He's currently working at ${siteContent.company}, so there may be a standard notice period. For specific timelines, it's best to discuss directly. Would you like to share more about the position?`;
-    }
-
-    // Specific project questions - Enhanced with fuzzy matching
-    if (fuzzyContains(lowerMessage, ['virtual friend', 'calling assistant', 'voice ai', 'rag', 'retrieval', 'conversational ai', 'leema', 'twilio', 'fastapi', 'emotion', 'wellness', 'companion'], 0.7)) {
-      const p = siteContent.projects[0];
-      return `${p.title}\n\n${p.description}\n\nRole: ${p.role}\nImpact: ${p.impact}\nTechnologies: ${p.tech.join(', ')}\n\nThis project showcases ${siteContent.name}'s expertise in RAG (Retrieval-Augmented Generation), conversational AI, and building production-ready voice applications.`;
-    }
-
-    if (fuzzyContains(lowerMessage, ['face recognition', 'cnn', 'person identification', 'facial', 'face detection', 'biometric', 'identity'], 0.7)) {
-      const p = siteContent.projects[1];
-      return `${p.title}\n\n${p.description}\n\nRole: ${p.role}\nImpact: ${p.impact}\nTechnologies: ${p.tech.join(', ')}\n\nThis project demonstrates ${siteContent.name}'s expertise in computer vision, CNN model development, and end-to-end ML pipeline from data collection to production deployment.`;
-    }
-
-    if (fuzzyContains(lowerMessage, ['vqa', 'visual question', 'multimodal', 'image question', 'coco', 'coco dataset', 'vision language'], 0.7)) {
-      const p = siteContent.projects[2];
-      return `${p.title}\n\n${p.description}\n\nRole: ${p.role}\nImpact: ${p.impact}\nTechnologies: ${p.tech.join(', ')}\n\nThis project showcases ${siteContent.name}'s expertise in multimodal AI, combining computer vision with natural language processing.`;
-    }
-
-    if (fuzzyContains(lowerMessage, ['video streaming', 'ffmpeg', 'rtsp', 'webrtc', 'low latency', 'real-time', 'streaming', 'video analytics', 'h.264', 'h.265', 'flv', 'media controller'], 0.7)) {
-      const p = siteContent.projects[3];
-      return `${p.title}\n\n${p.description}\n\nRole: ${p.role}\nImpact: ${p.impact}\nTechnologies: ${p.tech.join(', ')}\n\nThis project demonstrates ${siteContent.name}'s expertise in real-time video processing, low-latency streaming, and edge AI deployment.`;
-    }
-
-    if (fuzzyContains(lowerMessage, ['yolov4', 'yolo', 'object detection', 'streamlit', 'darknet', 'bounding box', 'detection', 'web app'], 0.7)) {
-      const p = siteContent.projects[4];
-      return `${p.title}\n\n${p.description}\n\nRole: ${p.role}\nImpact: ${p.impact}\nTechnologies: ${p.tech.join(', ')}\n\nThis project showcases ${siteContent.name}'s expertise in object detection, web application development, and GPU optimization.`;
-    }
-
-    if (fuzzyContains(lowerMessage, ['pharma', 'etl', 'data pipeline', 'power bi', 'dataiku', 'sales', 'reporting', 'dashboard', 'kpi', 'aws s3', 'mysql', 'dag'], 0.7)) {
-      const p = siteContent.projects[5];
-      return `${p.title}\n\n${p.description}\n\nRole: ${p.role}\nImpact: ${p.impact}\nTechnologies: ${p.tech.join(', ')}\n\nThis project demonstrates ${siteContent.name}'s expertise in data engineering, ETL pipelines, and business intelligence.`;
-    }
-
-    // Resume/CV questions - Enhanced with fuzzy matching
-    if (fuzzyContains(lowerMessage, ['resume', 'cv', 'curriculum vitae', 'download', 'pdf', 'document', 'profile'], 0.7)) {
-      return `You can find ${siteContent.name}'s resume and detailed profile information on this website. For the most up-to-date resume, please reach out directly at ${siteContent.email}. Would you like me to help you connect with him?`;
-    }
-
-    // Languages/Communication - Enhanced with fuzzy matching
-    if (fuzzyContains(lowerMessage, ['language', 'languages', 'speak', 'communication', 'english', 'telugu', 'kannada', 'tamil', 'hindi', 'multilingual'], 0.7)) {
-      return `${siteContent.name} is multilingual and can communicate in: ${siteContent.languages.join(', ')}. This helps him collaborate effectively with diverse teams and clients.`;
-    }
-
-    // Company/Current role specific - Enhanced with fuzzy matching
-    if (fuzzyContains(lowerMessage, ['amvar', 'amvar data', 'current company', 'where work', 'employer'], 0.7)) {
-      return `${siteContent.name} is currently working as a ${siteContent.role} at ${siteContent.company} since ${siteContent.startDate}. At Amvar Data Tech, he works on AI/ML solutions, computer vision applications, and edge AI deployment.`;
-    }
-
-    // Thank you/Appreciation - Enhanced with fuzzy matching
-    if (fuzzyContains(lowerMessage, ['thank', 'thanks', 'appreciate', 'grateful', 'helpful', 'nice', 'good', 'great', 'awesome', 'perfect'], 0.7)) {
-      const thanks = [
-        "You're welcome! I'm glad I could help. Is there anything else you'd like to know about Jagath Charan?",
-        "Happy to help! Feel free to ask if you need more information about his skills, projects, or experience.",
-        "You're welcome! If you have any other questions, I'm here to help."
-      ];
-      return thanks[Math.floor(Math.random() * thanks.length)];
-    }
-
-    // Default responses - Enhanced with better context awareness
-    const defaultResponses = [
-      "That's interesting! Could you tell me more about what you're looking for? I can help with information about Jagath Charan's skills, projects, experience, or availability.",
-      "I'd be happy to help with that. Could you provide a bit more context? For example, are you asking about his technical skills, projects, work experience, or something else?",
-      `${siteContent.name} has extensive experience in AI/ML, computer vision, and building production applications. What specific information would be most helpful?`,
-      "Let me know if you'd like details about his skills, projects, experience, certifications, or availability. I'm here to help!",
-      "I can help you learn about Jagath Charan's technical skills, projects, work experience, certifications, or discuss potential opportunities. What interests you most?",
-      "I'm here to answer questions about Jagath Charan's professional background. You can ask about skills, projects, experience, education, certifications, or how to connect with him.",
-    ];
-
-    // Check if it's a question - Enhanced response
-    if (lowerMessage.includes('?')) {
-      return "That's a great question! I can help you with information about Jagath Charan's:\n\n• Skills & Technologies\n• Projects & Portfolio\n• Work Experience & Achievements\n• Education & Certifications\n• Availability & Contact\n\nCould you be more specific about what you'd like to know? Or would you like me to help you connect with him directly?";
-    }
-
-    // Check for follow-up questions based on recent conversation
-    if (recentMessages.some(m => m.includes('skill') || m.includes('technology'))) {
-      if (lowerMessage.match(/\b(yes|sure|ok|okay|tell me|more|details|specific|which|what)\b/)) {
-        return "Great! Which specific skill or technology would you like to know more about? For example:\n\n• Computer Vision (OpenCV, YOLO)\n• Deep Learning (TensorFlow, PyTorch)\n• MLOps & Deployment\n• Generative AI & RAG\n• Video Streaming & Analytics";
-      }
-    }
-
-    if (recentMessages.some(m => m.includes('project') || m.includes('work'))) {
-      if (lowerMessage.match(/\b(yes|sure|ok|okay|tell me|more|details|specific|which|what)\b/)) {
-        return "Which project would you like to know more about?\n\n1. AI-Based Calling Assistant (RAG/Voice AI)\n2. Custom Face Recognition System\n3. Visual Question Answering\n4. Real-Time Video Streaming\n5. YOLOv4 Object Detection\n6. Pharma Sales ETL Platform";
-      }
-    }
-
-    return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
-  };
-
-  const handleSend = async () => {
-    if (!input.trim()) return;
-
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      text: input,
-      sender: 'user',
-      timestamp: new Date(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
-    const userInput = input.trim();
+    setMessages((prev) => [
+      ...prev,
+      { id: `${Date.now()}-u`, text: userInput, sender: 'user', timestamp: new Date() },
+    ]);
     setInput('');
     setIsTyping(true);
 
-    // Handle contact flow step by step
+    if (userInput.toLowerCase() === 'skip — just email' || userInput.toLowerCase() === 'skip') {
+      setContactFlow('idle');
+      setTimeout(
+        () =>
+          pushAi(`No problem. Email **${EMAIL}** or use WhatsApp from the contact buttons.`, [
+            'How can I contact him?',
+            'What does Jagath specialize in?',
+          ]),
+        400
+      );
+      return;
+    }
+
     if (contactFlow === 'asking_name') {
-      setTimeout(() => {
-        setVisitorInfo(prev => ({ ...prev, name: userInput }));
-        setContactFlow('asking_email');
-        const aiMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          text: `Nice to meet you, ${userInput}! Could you please provide your email address?`,
-          sender: 'ai',
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, aiMessage]);
-        setIsTyping(false);
-      }, 1000);
+      setVisitorInfo((prev) => ({ ...prev, name: userInput }));
+      setContactFlow('asking_email');
+      setTimeout(
+        () => pushAi(`Nice to meet you, **${userInput}**. What's your **email**?`),
+        450
+      );
       return;
     }
 
     if (contactFlow === 'asking_email') {
-      // Validate email format
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(userInput)) {
-        setTimeout(() => {
-          const aiMessage: Message = {
-            id: (Date.now() + 1).toString(),
-            text: `That doesn't look like a valid email address. Could you please provide a valid email? (e.g., yourname@example.com)`,
-            sender: 'ai',
-            timestamp: new Date(),
-          };
-          setMessages((prev) => [...prev, aiMessage]);
-          setIsTyping(false);
-        }, 1000);
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userInput)) {
+        setTimeout(
+          () => pushAi('That email looks off — try again (e.g. name@company.com).'),
+          400
+        );
         return;
       }
-      
-      setTimeout(() => {
-        setVisitorInfo(prev => ({ ...prev, email: userInput }));
-        setContactFlow('asking_message');
-        const aiMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          text: `Thank you! Now, could you please share your message or what you'd like to discuss?`,
-          sender: 'ai',
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, aiMessage]);
-        setIsTyping(false);
-      }, 1000);
+      setVisitorInfo((prev) => ({ ...prev, email: userInput }));
+      setContactFlow('asking_message');
+      setTimeout(
+        () =>
+          pushAi(
+            'Thanks. What would you like Jagath to know? (role, project, timeline — a few lines is fine)'
+          ),
+        450
+      );
       return;
     }
 
     if (contactFlow === 'asking_message') {
-      setTimeout(async () => {
-        const finalInfo = { ...visitorInfo, message: userInput };
-        setVisitorInfo(finalInfo);
-        
-        // Send email
-        const { sendEmail } = await import('../utils/emailService');
+      const finalInfo = { ...visitorInfo, message: userInput };
+      setVisitorInfo(finalInfo);
+      try {
         const success = await sendEmail({
           name: finalInfo.name,
           email: finalInfo.email,
-          company: finalInfo.company || '',
+          company: '',
           message: finalInfo.message,
-          title: 'AI Chat Contact Request',
+          title: 'Portfolio chat inquiry',
         });
-
-        if (success) {
-          const aiMessage: Message = {
-            id: (Date.now() + 1).toString(),
-            text: `Perfect! I've received your information:\n\n• Name: ${finalInfo.name}\n• Email: ${finalInfo.email}\n• Message: ${finalInfo.message}\n\nThank you for reaching out! ${siteContent.name} will contact you shortly. We appreciate your interest!`,
-            sender: 'ai',
-            timestamp: new Date(),
-          };
-          setMessages((prev) => [...prev, aiMessage]);
-          
-          // Reset contact flow
-          setContactFlow('idle');
-          setVisitorInfo({ name: '', email: '', company: '', message: '' });
-        } else {
-          const aiMessage: Message = {
-            id: (Date.now() + 1).toString(),
-            text: `I've received your information, but there was an issue sending the email. Please try contacting ${siteContent.name} directly at ${siteContent.email}. Thank you!`,
-            sender: 'ai',
-            timestamp: new Date(),
-          };
-          setMessages((prev) => [...prev, aiMessage]);
-          setContactFlow('idle');
-          setVisitorInfo({ name: '', email: '', company: '', message: '' });
-        }
-        setIsTyping(false);
-      }, 1000);
+        setContactFlow('idle');
+        setVisitorInfo({ name: '', email: '', message: '' });
+        pushAi(
+          success
+            ? `Got it, **${finalInfo.name}**. Your note was submitted. Jagath will follow up at **${finalInfo.email}**.\n\nYou can also WhatsApp or email him anytime.`
+            : `Saved your details locally in this chat. Form delivery may be unavailable — please email **${EMAIL}** or open WhatsApp with your note prefilled.`,
+          ['Edge AI work', 'Skills overview', 'Open WhatsApp']
+        );
+      } catch {
+        setContactFlow('idle');
+        pushAi(`Please reach Jagath at **${EMAIL}** — happy to keep answering questions here.`, [
+          'Skills overview',
+          'Projects',
+        ]);
+      }
       return;
     }
 
-    // Normal conversation flow - Use enhanced rule-based responses
-    setTimeout(() => {
-      const aiResponse = generateAIResponse(userInput);
-      
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: aiResponse,
-        sender: 'ai',
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, aiMessage]);
-      setIsTyping(false);
-    }, 800);
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  };
-
-  const handleSendEmail = async () => {
-    if (!visitorInfo.email || !visitorInfo.message) {
-      const errorMessage: Message = {
-        id: Date.now().toString(),
-        text: "Please provide at least your email and message to continue.",
-        sender: 'ai',
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
+    if (userInput.toLowerCase() === 'open whatsapp') {
+      window.open(
+        buildWhatsAppSendUrl({
+          name: 'Portfolio visitor',
+          email: '',
+          message: 'Hello Jagath, I found your portfolio and would like to connect.',
+        }),
+        '_blank',
+        'noopener,noreferrer'
+      );
+      setTimeout(
+        () => pushAi('Opened WhatsApp with a starter message. Anything else about Jagath?', [
+          'Projects',
+          'Availability',
+        ]),
+        300
+      );
       return;
     }
 
-    // Create conversation summary
-    const conversationSummary = messages
-      .filter(m => m.sender === 'user')
-      .slice(-5) // Last 5 user messages
-      .map(m => `Q: ${m.text}`)
-      .join('\n');
-
-    // Import and use email service
-    const { sendEmail } = await import('../utils/emailService');
-    const success = await sendEmail({
-      name: visitorInfo.name,
-      email: visitorInfo.email,
-      company: visitorInfo.company,
-      message: visitorInfo.message,
-      conversationSummary,
-    });
-
-    // Add a message to chat
-    const emailMessage: Message = {
-      id: Date.now().toString(),
-      text: success
-        ? `Thank you ${visitorInfo.name || 'for your interest'}! I've prepared an email with your information. The email client should open shortly. If it doesn't, you can reach Jagath Charan directly at Jagathcharan2004@gmail.com. He'll get back to you soon!`
-        : `Thank you for your interest! You can reach Jagath Charan directly at Jagathcharan2004@gmail.com. He'll be happy to discuss opportunities with you.`,
-      sender: 'ai',
-      timestamp: new Date(),
-    };
-    setMessages((prev) => [...prev, emailMessage]);
-    setShowInfoForm(false);
-    setVisitorInfo({ name: '', email: '', company: '', message: '' });
+    setTimeout(() => answerQuestion(userInput), 350 + Math.min(userInput.length * 8, 500));
   };
+
+  const placeholder =
+    contactFlow === 'asking_name'
+      ? 'Your name…'
+      : contactFlow === 'asking_email'
+        ? 'your.email@company.com'
+        : contactFlow === 'asking_message'
+          ? 'Your message…'
+          : 'Ask about skills, Edge AI, RAG, contact…';
 
   if (!isOpen) {
     return (
-      <div className="fixed bottom-24 right-6 z-50 flex items-end gap-3 animate-fade-in-up">
-        {/* Popup message with suggestions */}
-        <div className="bg-slate-800/95 backdrop-blur-sm text-white px-3 py-2.5 rounded-lg shadow-2xl border border-ai-primary/30 max-w-[180px] mb-2 animate-fade-in-up">
-          <p className="text-xs font-semibold text-ai-primary mb-1.5">Ask me about:</p>
-          <ul className="text-xs text-slate-300 space-y-0.5">
-            <li>• Skills & Expertise</li>
-            <li>• Projects & Experience</li>
-            <li>• AI & RAG Applications</li>
-            <li>• Availability</li>
-          </ul>
+      <div className="fixed bottom-24 right-5 sm:bottom-28 sm:right-6 z-50 flex items-end gap-3">
+        <div className="hidden xs:block max-w-[200px] rounded-2xl border border-cyan-500/25 bg-slate-900/95 px-3 py-2.5 shadow-xl shadow-cyan-500/10 backdrop-blur-md">
+          <p className="text-[11px] font-semibold text-cyan-300 mb-1 flex items-center gap-1">
+            <Sparkles size={12} /> Ask Jagath's assistant
+          </p>
+          <p className="text-[10px] text-slate-400 leading-relaxed">
+            Skills · Edge AI · RAG · Contact
+          </p>
         </div>
-        
-        {/* Chat button */}
         <button
+          type="button"
           onClick={() => setIsOpen(true)}
-          className="bg-gradient-to-r from-ai-primary to-ai-secondary text-white p-3 rounded-full shadow-2xl shadow-ai-primary/50 hover:shadow-ai-primary/70 transition-all duration-300 hover:scale-110 animate-float group flex-shrink-0 relative"
-          aria-label="Open AI Chat"
+          className="relative bg-gradient-to-br from-sky-500 to-cyan-600 text-white p-3.5 rounded-full shadow-xl shadow-cyan-500/35 hover:shadow-cyan-400/50 transition-transform duration-300 hover:scale-110"
+          aria-label="Open portfolio assistant"
         >
-          <MessageCircle size={20} className="group-hover:scale-110 transition-transform" />
-          <span className="absolute -top-1 -right-1 w-3 h-3 bg-ai-success rounded-full animate-pulse border-2 border-white"></span>
+          <MessageCircle size={22} />
+          <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-emerald-400 rounded-full border-2 border-slate-950 animate-pulse" />
         </button>
       </div>
     );
   }
 
   return (
-    <div 
-      className={`fixed bottom-6 right-6 z-50 w-[90vw] sm:w-96 max-w-md h-[550px] max-h-[85vh] bg-slate-900 rounded-2xl shadow-2xl border border-ai-primary/30 flex flex-col overflow-hidden ${isOpen ? 'chat-scale-in' : 'chat-scale-out'}`}
+    <div
+      ref={panelRef}
+      className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 w-[min(100vw-1.5rem,24rem)] h-[min(85vh,36rem)] bg-slate-950/95 rounded-2xl shadow-2xl shadow-cyan-500/15 border border-cyan-500/30 flex flex-col overflow-hidden chat-scale-in backdrop-blur-xl"
     >
-      {/* Header */}
-      <div className="bg-gradient-to-r from-ai-primary to-ai-secondary p-3 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center">
+      <div className="relative px-3.5 py-3 flex items-center justify-between bg-gradient-to-r from-sky-600 via-sky-500 to-cyan-500">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center ring-2 ring-white/25">
             <Bot size={18} className="text-white" />
           </div>
-          <div>
-            <h3 className="text-white font-semibold text-sm">AI Assistant</h3>
-            <p className="text-white/80 text-xs">Ask me anything about Jagath Charan</p>
+          <div className="min-w-0">
+            <h3 className="text-white font-semibold text-sm leading-tight truncate">Portfolio Assistant</h3>
+            <p className="text-white/85 text-[11px] truncate">Q&amp;A about Jagath Charan</p>
           </div>
         </div>
         <button
+          type="button"
           onClick={() => setIsOpen(false)}
-          className="text-white hover:bg-white/20 rounded-lg p-1 transition-colors"
+          className="text-white/90 hover:bg-white/15 rounded-lg p-1.5"
+          aria-label="Close chat"
         >
           <X size={18} />
         </button>
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-950">
+      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3 bg-[radial-gradient(ellipse_at_top,rgba(14,165,233,0.08),transparent_55%)] scrollbar-thin">
         {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex gap-3 ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
-            {message.sender === 'ai' && (
-              <div className="w-7 h-7 bg-gradient-to-br from-ai-primary to-ai-secondary rounded-full flex items-center justify-center flex-shrink-0">
-                <Bot size={14} className="text-white" />
+          <div key={message.id} className="space-y-2">
+            <div className={`flex gap-2 ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+              {message.sender === 'ai' && (
+                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-sky-500 to-cyan-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Bot size={13} className="text-white" />
+                </div>
+              )}
+              <div
+                className={`max-w-[82%] rounded-2xl px-3 py-2 text-[12px] leading-relaxed ${
+                  message.sender === 'user'
+                    ? 'bg-gradient-to-br from-sky-600 to-cyan-600 text-white rounded-br-md'
+                    : 'bg-slate-900/90 text-slate-200 border border-white/10 rounded-bl-md'
+                }`}
+              >
+                <div className="whitespace-pre-wrap">{renderRichText(message.text)}</div>
+                <p className="text-[10px] opacity-60 mt-1">
+                  {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </p>
               </div>
-            )}
-            <div
-              className={`max-w-[80%] rounded-lg p-2.5 ${
-                message.sender === 'user'
-                  ? 'bg-ai-primary text-white'
-                  : 'bg-slate-800 text-slate-200 border border-slate-700'
-              }`}
-            >
-              <p className="text-xs whitespace-pre-line">{message.text}</p>
-              <p className="text-xs opacity-70 mt-0.5">
-                {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </p>
+              {message.sender === 'user' && (
+                <div className="w-7 h-7 rounded-full bg-sky-500/20 border border-sky-400/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <User size={13} className="text-sky-300" />
+                </div>
+              )}
             </div>
-            {message.sender === 'user' && (
-              <div className="w-7 h-7 bg-ai-primary/20 rounded-full flex items-center justify-center flex-shrink-0">
-                <User size={14} className="text-ai-primary" />
+            {message.sender === 'ai' && message.suggestions && message.suggestions.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pl-9">
+                {message.suggestions.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => handleSend(s)}
+                    className="text-[10px] sm:text-[11px] px-2.5 py-1 rounded-full border border-cyan-500/30 bg-cyan-500/10 text-cyan-100 hover:bg-cyan-500/20 hover:border-cyan-400/50 transition-colors"
+                  >
+                    {s}
+                  </button>
+                ))}
               </div>
             )}
           </div>
         ))}
+
         {isTyping && (
-          <div className="flex gap-2.5 justify-start">
-            <div className="w-7 h-7 bg-gradient-to-br from-ai-primary to-ai-secondary rounded-full flex items-center justify-center">
-              <Bot size={14} className="text-white" />
+          <div className="flex gap-2">
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-sky-500 to-cyan-500 flex items-center justify-center">
+              <Bot size={13} className="text-white" />
             </div>
-            <div className="bg-slate-800 text-slate-200 rounded-lg p-2.5 border border-slate-700">
-              <div className="flex gap-1">
-                <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></span>
-                <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
-                <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></span>
-              </div>
+            <div className="bg-slate-900 border border-white/10 rounded-2xl px-3 py-2.5 flex gap-1">
+              <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce" />
+              <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce [animation-delay:0.15s]" />
+              <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-bounce [animation-delay:0.3s]" />
             </div>
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Info Form */}
-      {showInfoForm && (
-        <div className="p-3 bg-slate-800 border-t border-slate-700 space-y-2.5">
-          <h4 className="text-white font-semibold text-xs flex items-center gap-1.5">
-            <Mail size={14} />
-            Optional: Share Your Details
-          </h4>
-          <input
-            type="text"
-            placeholder="Your Name (Optional)"
-            value={visitorInfo.name}
-            onChange={(e) => setVisitorInfo({ ...visitorInfo, name: e.target.value })}
-            className="w-full px-2.5 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-xs placeholder-slate-500 focus:outline-none focus:border-ai-primary"
-          />
-          <input
-            type="email"
-            placeholder="Your Email *"
-            value={visitorInfo.email}
-            onChange={(e) => setVisitorInfo({ ...visitorInfo, email: e.target.value })}
-            className="w-full px-2.5 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-xs placeholder-slate-500 focus:outline-none focus:border-ai-primary"
-            required
-          />
-          <input
-            type="text"
-            placeholder="Company/Organization (Optional)"
-            value={visitorInfo.company}
-            onChange={(e) => setVisitorInfo({ ...visitorInfo, company: e.target.value })}
-            className="w-full px-2.5 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-xs placeholder-slate-500 focus:outline-none focus:border-ai-primary"
-          />
-          <textarea
-            placeholder="Your Message/Inquiry *"
-            value={visitorInfo.message}
-            onChange={(e) => setVisitorInfo({ ...visitorInfo, message: e.target.value })}
-            rows={3}
-            className="w-full px-2.5 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-xs placeholder-slate-500 focus:outline-none focus:border-ai-primary resize-none"
-            required
-          />
-          <div className="flex gap-2">
-            <button
-              onClick={handleSendEmail}
-              className="flex-1 px-3 py-2 bg-gradient-to-r from-ai-success to-emerald-600 text-white rounded-lg font-semibold text-xs hover:shadow-lg hover:shadow-ai-success/50 transition-all duration-300 hover:scale-105 flex items-center justify-center gap-1.5"
-            >
-              <Send size={14} />
-              Send Email
-            </button>
-            <button
-              onClick={() => {
-                setShowInfoForm(false);
-                setVisitorInfo({ name: '', email: '', company: '', message: '' });
-              }}
-              className="px-3 py-2 bg-slate-700 text-white rounded-lg font-semibold text-xs hover:bg-slate-600 transition-colors"
-            >
-              Skip
-            </button>
-          </div>
-        </div>
-      )}
+      <div className="px-3 py-2 border-t border-white/10 bg-slate-900/80 flex gap-2">
+        <a
+          href={buildMailto({
+            name: 'Portfolio visitor',
+            email: '',
+            message: 'Hello Jagath, I found your portfolio via the chat assistant.',
+          })}
+          className="flex-1 text-center text-[11px] font-semibold py-1.5 rounded-lg bg-sky-500/15 text-sky-200 border border-sky-500/30 hover:bg-sky-500/25"
+        >
+          Email
+        </a>
+        <a
+          href={buildWhatsAppSendUrl({
+            name: 'Portfolio visitor',
+            email: '',
+            message: 'Hello Jagath, I found your portfolio via the chat assistant.',
+          })}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex-1 text-center text-[11px] font-semibold py-1.5 rounded-lg bg-emerald-500/15 text-emerald-200 border border-emerald-500/30 hover:bg-emerald-500/25"
+        >
+          WhatsApp
+        </a>
+      </div>
 
-      {/* Input */}
-      {!showInfoForm && (
-        <div className="p-3 bg-slate-800 border-t border-slate-700">
-          <div className="flex gap-2">
-            <input
-              ref={inputRef}
-              type={contactFlow === 'asking_email' ? 'email' : 'text'}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder={
-                contactFlow === 'asking_name' 
-                  ? 'Type your name...' 
-                  : contactFlow === 'asking_email'
-                  ? 'Type your email address...'
-                  : contactFlow === 'asking_message'
-                  ? 'Type your message...'
-                  : 'Ask about skills, experience, projects...'
+      <div className="p-3 bg-slate-900/95 border-t border-white/10">
+        <div className="flex gap-2">
+          <input
+            ref={inputRef}
+            type={contactFlow === 'asking_email' ? 'email' : 'text'}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                void handleSend();
               }
-              className="flex-1 px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white text-xs placeholder-slate-500 focus:outline-none focus:border-ai-primary"
-            />
-            <button
-              onClick={handleSend}
-              disabled={!input.trim()}
-              className="px-3 py-2 bg-gradient-to-r from-ai-primary to-ai-secondary text-white rounded-lg font-semibold hover:shadow-lg hover:shadow-ai-primary/50 transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-            >
-              <Send size={16} />
-            </button>
-          </div>
+            }}
+            placeholder={placeholder}
+            className="flex-1 px-3 py-2.5 bg-slate-950 border border-white/10 rounded-xl text-white text-xs placeholder-slate-500 focus:outline-none focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-500/20"
+          />
+          <button
+            type="button"
+            onClick={() => void handleSend()}
+            disabled={!input.trim() || isTyping}
+            className="px-3.5 py-2.5 bg-gradient-to-r from-sky-500 to-cyan-500 text-white rounded-xl hover:shadow-lg hover:shadow-cyan-500/30 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            aria-label="Send message"
+          >
+            <Send size={16} />
+          </button>
         </div>
-      )}
+      </div>
     </div>
   );
 }
+
+export default memo(AIChat);

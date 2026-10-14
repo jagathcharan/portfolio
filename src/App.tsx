@@ -66,9 +66,10 @@ function App() {
   return (
     <div className="min-h-screen bg-slate-950 relative overflow-x-hidden">
       <div className="fixed inset-0 overflow-hidden pointer-events-none" aria-hidden>
-        <div className="absolute top-0 left-1/4 w-72 sm:w-96 h-72 sm:h-96 bg-ai-primary/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-0 w-72 sm:w-96 h-72 sm:h-96 bg-indigo-500/10 rounded-full blur-3xl" />
-        <div className="absolute inset-0 ai-grid opacity-[0.035]" />
+        <div className="absolute top-0 left-1/4 w-72 sm:w-96 h-72 sm:h-96 bg-sky-500/15 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-0 w-72 sm:w-96 h-72 sm:h-96 bg-teal-500/10 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 w-[40rem] h-[40rem] bg-cyan-500/5 rounded-full blur-3xl" />
+        <div className="absolute inset-0 ai-grid opacity-[0.04]" />
       </div>
       
       <Navigation />

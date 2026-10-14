@@ -65,8 +65,8 @@ function Experience() {
         title: 'Software & Applications',
         short: 'Software',
         icon: Cpu,
-        accent: 'from-blue-500 to-indigo-600',
-        ring: 'ring-blue-400/40',
+        accent: 'from-sky-500 to-cyan-600',
+        ring: 'ring-cyan-400/40',
         items: [
           'Built backend services and REST APIs (FastAPI) powering production AI applications, including a RAG knowledge assistant and a real-time voice assistant.',
           'Built modular AI applications across 3 deployment sectors: Retail (customer analytics, theft prevention), Industrial Safety (PPE detection, hazard monitoring), and Residential Security (intrusion detection, visitor management).',
@@ -78,8 +78,8 @@ function Experience() {
         title: 'Security & Deployment',
         short: 'Security',
         icon: Shield,
-        accent: 'from-indigo-500 to-violet-600',
-        ring: 'ring-indigo-400/40',
+        accent: 'from-teal-500 to-cyan-600',
+        ring: 'ring-teal-400/40',
         items: [
           'Built CI/CD pipelines using GitHub Actions and Docker, automating testing, model versioning, and deployment validation for every release.',
           'Built a secure deployment framework with end-to-end encryption, tamper protection, and real-time health monitoring across 200+ edge devices.',
@@ -92,8 +92,8 @@ function Experience() {
         title: 'AI/ML & Video Systems',
         short: 'AI/ML',
         icon: Sparkles,
-        accent: 'from-violet-500 to-fuchsia-600',
-        ring: 'ring-violet-400/40',
+        accent: 'from-cyan-500 to-teal-600',
+        ring: 'ring-cyan-400/40',
         items: [
           'Developed an offline CNN face recognition system with 98.5% accuracy on custom video-derived datasets; TensorRT FP16 quantization delivered 30 FPS on Jetson Nano.',
           'Built a production-grade Retrieval-Augmented Generation (RAG) application for enterprise knowledge management, deployed offline across 2 specialized domains (legal, technical) with multilingual support.',

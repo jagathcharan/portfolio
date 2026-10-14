@@ -166,7 +166,7 @@ function Contact() {
             <h2 className="font-display text-2xl xs:text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3">
               <span className="gradient-text">Get In Touch</span>
             </h2>
-            <div className="h-1 w-16 sm:w-20 bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-400 mx-auto rounded-full mb-4" />
+            <div className="h-1 w-16 sm:w-20 bg-gradient-to-r from-sky-400 via-cyan-400 to-teal-400 mx-auto rounded-full mb-4" />
             <p className="text-slate-300 text-sm sm:text-base lg:text-lg max-w-2xl mx-auto px-4 leading-relaxed">
               Fill the form, then send via email app or WhatsApp — or submit directly. Open to full-time roles and consulting.
             </p>
@@ -326,7 +326,7 @@ function Contact() {
                 <button
                   type="submit"
                   disabled={status === 'loading'}
-                  className="w-full px-5 py-3 bg-gradient-to-r from-ai-primary via-blue-500 to-indigo-500 text-white rounded-lg sm:rounded-xl font-semibold text-xs sm:text-sm hover:shadow-2xl hover:shadow-ai-primary/40 transition-all duration-300 hover:scale-[1.02] flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                  className="w-full px-5 py-3 bg-gradient-to-r from-sky-500 via-cyan-500 to-teal-500 text-white rounded-lg sm:rounded-xl font-semibold text-xs sm:text-sm hover:shadow-2xl hover:shadow-cyan-500/40 transition-all duration-300 hover:scale-[1.02] flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                 >
                   {status === 'loading' ? (
                     <>

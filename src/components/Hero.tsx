@@ -61,10 +61,10 @@ function Hero({ onContactClick }: HeroProps) {
               <span className="block gradient-text-animated">Vankayala</span>
               <span className="block text-white">Jagath Charan</span>
             </h1>
-            <div className="h-1 w-24 sm:w-32 bg-gradient-to-r from-sky-400 via-blue-500 to-cyan-400 mx-auto rounded-full animate-scale-in" />
+            <div className="h-1 w-24 sm:w-32 bg-gradient-to-r from-sky-400 via-cyan-400 to-teal-400 mx-auto rounded-full animate-scale-in" />
           </div>
 
-          <h2 className="font-display text-sm sm:text-base md:text-lg lg:text-xl text-sky-300/95 font-semibold animate-fade-in-up px-2 leading-relaxed tracking-wide" style={{ animationDelay: '0.15s' }}>
+          <h2 className="font-display text-sm sm:text-base md:text-lg lg:text-xl text-cyan-200/95 font-semibold animate-fade-in-up px-2 leading-relaxed tracking-wide" style={{ animationDelay: '0.15s' }}>
             Machine Learning Engineer · Computer Vision &amp; Edge AI · Generative AI (RAG) · Python Backend · MLOps
           </h2>
 
@@ -92,7 +92,7 @@ function Hero({ onContactClick }: HeroProps) {
             <a
               href="#contact"
               onClick={onContactClick}
-              className="group relative px-6 sm:px-8 py-3 bg-gradient-to-r from-sky-600 via-blue-600 to-blue-500 text-white rounded-xl font-semibold text-sm hover:shadow-lg hover:shadow-sky-500/30 transition-transform duration-200 hover:scale-[1.03] overflow-hidden w-full xs:w-auto"
+              className="group relative px-6 sm:px-8 py-3 bg-gradient-to-r from-sky-500 via-cyan-500 to-teal-500 text-white rounded-xl font-semibold text-sm hover:shadow-lg hover:shadow-cyan-500/30 transition-transform duration-200 hover:scale-[1.03] overflow-hidden w-full xs:w-auto"
             >
               <span className="relative z-10 flex items-center justify-center gap-2">
                 Get In Touch

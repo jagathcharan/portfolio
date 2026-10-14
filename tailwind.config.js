@@ -9,14 +9,14 @@ export default {
       },
       colors: {
         ai: {
-          primary: '#2563EB', // Professional Blue
-          secondary: '#1E40AF', // Deep Blue
-          accent: '#3B82F6', // Bright Blue
-          highlight: '#60A5FA', // Light Blue
-          dark: '#0F172A', // Slate 950
-          darker: '#020617', // Slate 950 darker
-          light: '#DBEAFE', // Blue 100
-          success: '#10B981', // Green for CTAs
+          primary: '#0EA5E9', // Sky
+          secondary: '#0284C7', // Deep sky
+          accent: '#14B8A6', // Teal
+          highlight: '#22D3EE', // Cyan
+          dark: '#0F172A',
+          darker: '#020617',
+          light: '#E0F2FE',
+          success: '#10B981',
         },
       },
       animation: {

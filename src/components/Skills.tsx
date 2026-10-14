@@ -58,7 +58,7 @@ function Skills() {
     <section id="skills" className="py-16 sm:py-20 lg:py-28 relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900" />
       <div className="absolute inset-0 ai-grid opacity-[0.04]"></div>
-      <div className="absolute bottom-0 right-0 w-64 sm:w-96 h-64 sm:h-96 bg-indigo-500/10 blur-3xl rounded-full pointer-events-none" />
+      <div className="absolute bottom-0 right-0 w-64 sm:w-96 h-64 sm:h-96 bg-teal-500/10 blur-3xl rounded-full pointer-events-none" />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="max-w-7xl mx-auto">
@@ -70,7 +70,7 @@ function Skills() {
             <h2 className="font-display text-2xl xs:text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3">
               <span className="gradient-text">Technical Skills</span>
             </h2>
-            <div className="h-1 w-16 sm:w-20 bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-400 mx-auto rounded-full"></div>
+            <div className="h-1 w-16 sm:w-20 bg-gradient-to-r from-sky-400 via-cyan-400 to-teal-400 mx-auto rounded-full"></div>
           </div>
 
           <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-5">
@@ -80,7 +80,7 @@ function Skills() {
                 className="glass hover-lift rounded-xl sm:rounded-2xl p-4 sm:p-5 group reveal relative overflow-hidden"
                 style={{ animationDelay: `${index * 0.04}s` }}
               >
-                <div className={`absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r ${category.gradient} opacity-70`} />
+                <div className={`absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r ${category.gradient} opacity-80`} />
                 <div className="mb-3 sm:mb-4">
                   <h3 className={`font-display text-sm sm:text-base md:text-lg font-bold bg-gradient-to-r ${category.gradient} bg-clip-text text-transparent`}>
                     {category.category}
@@ -90,7 +90,7 @@ function Skills() {
                   {category.skills.map((skill, skillIndex) => (
                     <span
                       key={skillIndex}
-                      className="px-2 py-1 bg-slate-800/80 text-slate-300 rounded-md text-[10px] sm:text-xs border border-white/5 hover:border-sky-400/40 hover:text-sky-300 hover:bg-sky-500/10 transition-colors duration-200 cursor-default"
+                      className="px-2 py-1 bg-slate-800/80 text-slate-300 rounded-md text-[10px] sm:text-xs border border-white/5 hover:border-cyan-400/40 hover:text-cyan-200 hover:bg-cyan-500/10 transition-colors duration-200 cursor-default"
                     >
                       {skill}
                     </span>
