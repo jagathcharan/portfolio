@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://jagathcharan.github.io/portfolio/sitemap.xml
