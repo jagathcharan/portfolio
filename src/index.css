@@ -3,12 +3,16 @@
 @tailwind utilities;
 
 :root {
-  --brand-sky: #0ea5e9;
+  --brand-sky: #38bdf8;
   --brand-cyan: #22d3ee;
-  --brand-teal: #14b8a6;
-  --brand-ink: #020617;
-  --brand-panel: #0b1220;
-  --brand-glow: rgba(14, 165, 233, 0.18);
+  --brand-teal: #2dd4bf;
+  --brand-amber: #fbbf24;
+  --brand-ink: #050b14;
+  --brand-panel: #0a1628;
+  --brand-glow: rgba(56, 189, 248, 0.16);
+  --brand-warm: rgba(251, 191, 36, 0.12);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
 }
 
 @layer base {
@@ -20,8 +24,9 @@
   body {
     @apply antialiased font-sans text-slate-200;
     background:
-      radial-gradient(1200px 600px at 10% -10%, rgba(14, 165, 233, 0.16), transparent 55%),
-      radial-gradient(900px 500px at 90% 10%, rgba(20, 184, 166, 0.1), transparent 50%),
+      radial-gradient(1100px 520px at 8% -8%, rgba(56, 189, 248, 0.18), transparent 55%),
+      radial-gradient(900px 480px at 92% 8%, rgba(45, 212, 191, 0.1), transparent 50%),
+      radial-gradient(700px 400px at 50% 100%, rgba(251, 191, 36, 0.06), transparent 55%),
       var(--brand-ink);
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
@@ -34,7 +39,7 @@
   }
 
   ::selection {
-    background: rgba(34, 211, 238, 0.35);
+    background: rgba(45, 212, 191, 0.35);
     color: #fff;
   }
 
@@ -42,13 +47,19 @@
     @apply transition-colors duration-200;
     transform: translateZ(0);
   }
+
+  @media (max-width: 640px) {
+    body {
+      font-size: 15px;
+    }
+  }
 }
 
 @layer utilities {
   .reveal {
     opacity: 0;
-    transform: translate3d(0, 36px, 0);
-    transition: opacity 0.65s cubic-bezier(0.22, 1, 0.36, 1), transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+    transform: translate3d(0, 28px, 0);
+    transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1), transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
     will-change: opacity, transform;
     backface-visibility: hidden;
   }
@@ -61,19 +72,19 @@
 
   .neural-pattern {
     background-image:
-      radial-gradient(circle at 1px 1px, rgba(14, 165, 233, 0.1) 1px, transparent 0);
-    background-size: 44px 44px;
+      radial-gradient(circle at 1px 1px, rgba(56, 189, 248, 0.09) 1px, transparent 0);
+    background-size: 40px 40px;
   }
 
   .ai-grid {
     background-image:
-      linear-gradient(rgba(14, 165, 233, 0.05) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(20, 184, 166, 0.04) 1px, transparent 1px);
+      linear-gradient(rgba(56, 189, 248, 0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(251, 191, 36, 0.03) 1px, transparent 1px);
     background-size: 48px 48px;
   }
 
   .gradient-text {
-    @apply bg-gradient-to-r from-sky-300 via-cyan-300 to-teal-300 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-sky-300 via-cyan-300 to-amber-200 bg-clip-text text-transparent;
     background-size: 200% auto;
   }
 
@@ -83,23 +94,23 @@
   }
 
   .glass {
-    background: linear-gradient(180deg, rgba(15, 23, 42, 0.78), rgba(2, 6, 23, 0.72));
+    background: linear-gradient(165deg, rgba(12, 24, 42, 0.88), rgba(5, 11, 20, 0.78));
     @apply border border-white/10;
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
     box-shadow:
-      0 0 0 1px rgba(14, 165, 233, 0.08),
-      0 10px 36px rgba(0, 0, 0, 0.35);
+      0 0 0 1px rgba(56, 189, 248, 0.07),
+      0 10px 36px rgba(0, 0, 0, 0.38);
   }
 
   .glass-strong {
-    background: linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(2, 6, 23, 0.85));
-    @apply border border-cyan-500/25;
+    background: linear-gradient(165deg, rgba(12, 24, 42, 0.94), rgba(5, 11, 20, 0.88));
+    @apply border border-cyan-400/25;
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     box-shadow:
-      0 0 0 1px rgba(34, 211, 238, 0.12),
-      0 14px 40px rgba(14, 165, 233, 0.1);
+      0 0 0 1px rgba(45, 212, 191, 0.12),
+      0 14px 40px rgba(56, 189, 248, 0.1);
   }
 
   .hover-lift {
@@ -110,10 +121,11 @@
 
   .hover-lift:hover {
     transform: translateZ(0) translateY(-4px);
-    border-color: rgba(34, 211, 238, 0.35);
+    border-color: rgba(45, 212, 191, 0.35);
     box-shadow:
-      0 0 0 1px rgba(14, 165, 233, 0.18),
-      0 18px 40px rgba(14, 165, 233, 0.12),
+      0 0 0 1px rgba(56, 189, 248, 0.16),
+      0 0 0 1px rgba(251, 191, 36, 0.08),
+      0 18px 40px rgba(56, 189, 248, 0.12),
       0 8px 24px rgba(0, 0, 0, 0.35);
   }
 
@@ -121,28 +133,26 @@
     @apply inline-flex items-center gap-2 text-xs sm:text-sm font-semibold uppercase tracking-[0.18em] text-cyan-300/90 mb-3;
   }
 
-  .stat-pill {
-    @apply px-3 py-1.5 rounded-full text-xs sm:text-sm font-semibold
-      bg-cyan-500/10 text-cyan-200 border border-cyan-400/25
-      backdrop-blur-sm;
-  }
-
   .section-shell {
     @apply relative overflow-hidden;
   }
 
-  .section-shell::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background:
-      radial-gradient(700px 280px at 50% 0%, var(--brand-glow), transparent 70%);
-    pointer-events: none;
+  .section-pad {
+    @apply py-14 sm:py-20 lg:py-28;
+  }
+
+  .container-tight {
+    @apply container mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .safe-float {
+    bottom: calc(1.25rem + var(--safe-bottom));
+    right: calc(1rem + var(--safe-right));
   }
 
   .scrollbar-thin {
     scrollbar-width: thin;
-    scrollbar-color: rgba(34, 211, 238, 0.35) transparent;
+    scrollbar-color: rgba(45, 212, 191, 0.35) transparent;
   }
 
   .scrollbar-thin::-webkit-scrollbar {
@@ -151,37 +161,34 @@
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: rgba(34, 211, 238, 0.35);
+    background: rgba(45, 212, 191, 0.35);
     border-radius: 9999px;
   }
 
   @keyframes scaleIn {
     from {
       opacity: 0;
-      transform: scale(0.92) translateY(16px);
+      transform: scale(0.94) translateY(12px);
     }
     to {
       opacity: 1;
       transform: scale(1) translateY(0);
-    }
-  }
-
-  @keyframes scaleOut {
-    from {
-      opacity: 1;
-      transform: scale(1) translateY(0);
-    }
-    to {
-      opacity: 0;
-      transform: scale(0.9) translateY(24px);
     }
   }
 
   .chat-scale-in {
-    animation: scaleIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    animation: scaleIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   }
 
-  .chat-scale-out {
-    animation: scaleOut 0.35s ease forwards;
+  @media (prefers-reduced-motion: reduce) {
+    .reveal,
+    .reveal.active,
+    .chat-scale-in,
+    .gradient-text-animated {
+      animation: none !important;
+      transition: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
   }
 }

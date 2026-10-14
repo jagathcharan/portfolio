@@ -44,9 +44,10 @@ function Navigation() {
 
   const navLinks = [
     { name: 'About', href: '#about' },
-    { name: 'Experience', href: '#experience' },
+    { name: 'Roles', href: '#roles' },
+    { name: 'Experience', short: 'Exp', href: '#experience' },
     { name: 'Skills', href: '#skills' },
-    { name: 'Projects', short: 'Projects', href: '#projects' },
+    { name: 'Projects', short: 'Work', href: '#projects' },
     { name: 'Certifications', short: 'Certs', href: '#certifications' },
     { name: 'Contact', href: '#contact' },
   ];
@@ -61,13 +62,13 @@ function Navigation() {
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled
-          ? 'bg-slate-950/90 border-b border-cyan-500/20 shadow-lg shadow-cyan-500/5'
+          ? 'bg-[#050b14]/92 border-b border-cyan-500/20 shadow-lg shadow-cyan-500/5'
           : 'bg-transparent'
       }`}
       style={{ backdropFilter: isScrolled ? 'blur(14px)' : 'none', WebkitBackdropFilter: isScrolled ? 'blur(14px)' : 'none' }}
     >
-      <div className="container mx-auto px-3 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-14 sm:h-16 lg:h-20 gap-2">
+      <div className="container mx-auto px-3 sm:px-5 lg:px-8">
+          <div className="flex items-center justify-between h-14 sm:h-16 lg:h-[4.5rem] gap-2">
           <a
             href="#"
             onClick={(e) => {
@@ -95,7 +96,7 @@ function Navigation() {
             <a
               href={RESUME_PDF}
               download={RESUME_FILENAME}
-              className="ml-1 lg:ml-2 px-2.5 lg:px-3 py-1.5 bg-gradient-to-r from-teal-600 to-cyan-500 text-white rounded-lg font-semibold text-[11px] lg:text-xs hover:shadow-lg hover:shadow-cyan-500/30 transition-transform duration-200 hover:scale-105 flex items-center gap-1 shrink-0"
+              className="ml-1 lg:ml-2 px-2.5 lg:px-3 py-1.5 bg-gradient-to-r from-teal-500 via-cyan-500 to-sky-500 text-white rounded-lg font-semibold text-[11px] lg:text-xs hover:shadow-lg hover:shadow-cyan-500/30 transition-transform duration-200 hover:scale-105 flex items-center gap-1 shrink-0"
             >
               Resume
             </a>

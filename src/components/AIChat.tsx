@@ -231,7 +231,7 @@ function AIChat() {
 
   if (!isOpen) {
     return (
-      <div className="fixed bottom-24 right-5 sm:bottom-28 sm:right-6 z-50 flex items-end gap-3">
+      <div className="fixed bottom-[5.5rem] right-4 sm:bottom-28 sm:right-6 z-50 flex items-end gap-3" style={{ marginBottom: 'env(safe-area-inset-bottom, 0px)' }}>
         <div className="hidden xs:block max-w-[200px] rounded-2xl border border-cyan-500/25 bg-slate-900/95 px-3 py-2.5 shadow-xl shadow-cyan-500/10 backdrop-blur-md">
           <p className="text-[11px] font-semibold text-cyan-300 mb-1 flex items-center gap-1">
             <Sparkles size={12} /> Ask Jagath's assistant

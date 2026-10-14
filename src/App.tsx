@@ -2,6 +2,7 @@ import { useEffect, lazy, Suspense, useCallback } from 'react';
 import Navigation from './components/Navigation';
 import Hero from './components/Hero';
 import About from './components/About';
+import Roles from './components/Roles';
 
 const Experience = lazy(() => import('./components/Experience'));
 const Skills = lazy(() => import('./components/Skills'));
@@ -14,7 +15,8 @@ const AIChat = lazy(() => import('./components/AIChat'));
 
 function App() {
   useEffect(() => {
-    document.title = 'Vankayala Jagath Charan | Machine Learning Engineer';
+    document.title =
+      'Vankayala Jagath Charan | Machine Learning Engineer · Computer Vision · Edge AI · RAG · MLOps | Bengaluru';
     
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     
@@ -64,23 +66,28 @@ function App() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-950 relative overflow-x-hidden">
+    <div className="min-h-screen bg-[#050b14] relative overflow-x-hidden">
       <div className="fixed inset-0 overflow-hidden pointer-events-none" aria-hidden>
-        <div className="absolute top-0 left-1/4 w-72 sm:w-96 h-72 sm:h-96 bg-sky-500/15 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-0 w-72 sm:w-96 h-72 sm:h-96 bg-teal-500/10 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 w-[40rem] h-[40rem] bg-cyan-500/5 rounded-full blur-3xl" />
-        <div className="absolute inset-0 ai-grid opacity-[0.04]" />
+        <div className="absolute top-0 left-1/4 w-72 sm:w-[28rem] h-72 sm:h-[28rem] bg-sky-400/15 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-0 w-72 sm:w-96 h-72 sm:h-96 bg-teal-400/12 rounded-full blur-3xl" />
+        <div className="absolute top-[60%] left-[10%] w-64 h-64 bg-amber-400/8 rounded-full blur-3xl" />
+        <div className="absolute inset-0 ai-grid opacity-[0.045]" />
       </div>
       
       <Navigation />
-      <Hero onContactClick={handleContactClick} />
-      <About />
+      <main>
+        <Hero onContactClick={handleContactClick} />
+        <About />
+        <Roles />
+        <Suspense fallback={null}>
+          <Experience />
+          <Skills />
+          <Projects />
+          <Certifications />
+          <Contact />
+        </Suspense>
+      </main>
       <Suspense fallback={null}>
-        <Experience />
-        <Skills />
-        <Projects />
-        <Certifications />
-        <Contact />
         <Footer />
         <FloatingResumeButton />
         <AIChat />

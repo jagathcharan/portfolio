@@ -9,14 +9,14 @@ export default {
       },
       colors: {
         ai: {
-          primary: '#0EA5E9', // Sky
-          secondary: '#0284C7', // Deep sky
-          accent: '#14B8A6', // Teal
-          highlight: '#22D3EE', // Cyan
-          dark: '#0F172A',
-          darker: '#020617',
+          primary: '#38BDF8',
+          secondary: '#0EA5E9',
+          accent: '#2DD4BF',
+          highlight: '#FBBF24',
+          dark: '#0A1628',
+          darker: '#050B14',
           light: '#E0F2FE',
-          success: '#10B981',
+          success: '#34D399',
         },
       },
       animation: {

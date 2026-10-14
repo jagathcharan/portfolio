@@ -53,7 +53,7 @@ function FloatingResumeButton() {
   if (!isVisible) return null;
 
   return (
-    <div className="fixed bottom-5 right-4 sm:bottom-6 sm:right-28 z-40 flex flex-col sm:flex-row items-end sm:items-center gap-2.5 sm:gap-3">
+    <div className="fixed z-40 flex flex-col sm:flex-row items-end sm:items-center gap-2.5 sm:gap-3 safe-float sm:bottom-6 sm:right-28">
       <a
         href={buildMailto(quickMessage)}
         className="bg-sky-600 text-white p-3 rounded-full shadow-xl shadow-sky-500/30 hover:shadow-sky-500/50 transition-all duration-300 hover:scale-110 group"

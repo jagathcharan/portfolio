@@ -39,36 +39,63 @@ function Hero({ onContactClick }: HeroProps) {
     { href: 'https://jagathcharan.github.io/portfolio/', icon: MapPin, label: 'Portfolio' },
   ];
 
+  const roleTags = [
+    'ML Engineer',
+    'Computer Vision',
+    'Edge AI',
+    'RAG / GenAI',
+    'MLOps',
+    'FastAPI',
+  ];
+
   return (
-    <section className="min-h-screen flex items-center justify-center relative overflow-hidden pt-20 sm:pt-24 bg-slate-950">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(14,165,233,0.16),transparent_55%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(37,99,235,0.14),transparent_50%)]" />
+    <section className="min-h-[100svh] flex items-center justify-center relative overflow-hidden pt-16 sm:pt-20 lg:pt-24 pb-16">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(56,189,248,0.18),transparent_55%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(45,212,191,0.12),transparent_50%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,rgba(251,191,36,0.08),transparent_45%)]" />
       <div className="absolute inset-0 ai-grid opacity-[0.07]" />
-      <div className="absolute top-1/4 -left-24 w-72 h-72 bg-sky-500/15 rounded-full blur-3xl animate-pulse-slow" />
-      <div className="absolute bottom-1/4 -right-24 w-80 h-80 bg-blue-600/15 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '2s' }} />
+      <div className="absolute top-1/4 -left-24 w-72 h-72 bg-sky-400/15 rounded-full blur-3xl animate-pulse-slow" />
+      <div className="absolute bottom-1/4 -right-24 w-80 h-80 bg-teal-400/12 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '2s' }} />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="max-w-4xl mx-auto text-center space-y-7 sm:space-y-8">
+        <div className="max-w-4xl mx-auto text-center space-y-5 sm:space-y-7">
           <div className="animate-fade-in-down">
-            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide bg-emerald-500/10 text-emerald-300 border border-emerald-500/25">
+            <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-semibold tracking-wide bg-emerald-500/10 text-emerald-300 border border-emerald-500/25">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              Open to opportunities · Bengaluru, India
+              Open to hire · Bengaluru / Remote
             </span>
           </div>
 
-          <div className="space-y-4 animate-fade-in-down" style={{ animationDelay: '0.05s' }}>
-            <h1 className="font-display text-4xl xs:text-5xl sm:text-6xl md:text-7xl lg:text-[5.25rem] font-extrabold tracking-tight leading-[1.05]">
+          <div className="space-y-3 sm:space-y-4 animate-fade-in-down" style={{ animationDelay: '0.05s' }}>
+            <h1 className="font-display text-[2.35rem] leading-[1.05] xs:text-5xl sm:text-6xl md:text-7xl lg:text-[5.1rem] font-extrabold tracking-tight">
               <span className="block gradient-text-animated">Vankayala</span>
               <span className="block text-white">Jagath Charan</span>
             </h1>
-            <div className="h-1 w-24 sm:w-32 bg-gradient-to-r from-sky-400 via-cyan-400 to-teal-400 mx-auto rounded-full animate-scale-in" />
+            <div className="h-1 w-24 sm:w-32 bg-gradient-to-r from-sky-400 via-cyan-400 to-amber-300 mx-auto rounded-full animate-scale-in" />
           </div>
 
-          <h2 className="font-display text-sm sm:text-base md:text-lg lg:text-xl text-cyan-200/95 font-semibold animate-fade-in-up px-2 leading-relaxed tracking-wide" style={{ animationDelay: '0.15s' }}>
+          <h2 className="font-display text-[13px] sm:text-base md:text-lg lg:text-xl text-cyan-100/95 font-semibold animate-fade-in-up px-1 leading-relaxed tracking-wide" style={{ animationDelay: '0.15s' }}>
             Machine Learning Engineer · Computer Vision &amp; Edge AI · Generative AI (RAG) · Python Backend · MLOps
           </h2>
 
-          <p className="text-sm sm:text-base md:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed px-2 animate-fade-in-up" style={{ animationDelay: '0.25s' }}>
+          <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2 animate-fade-in-up px-1" style={{ animationDelay: '0.2s' }}>
+            {roleTags.map((tag, i) => (
+              <span
+                key={tag}
+                className={`px-2.5 py-1 rounded-lg text-[10px] sm:text-xs font-semibold border ${
+                  i % 3 === 0
+                    ? 'bg-sky-500/10 text-sky-200 border-sky-400/25'
+                    : i % 3 === 1
+                      ? 'bg-teal-500/10 text-teal-200 border-teal-400/25'
+                      : 'bg-amber-500/10 text-amber-100 border-amber-400/25'
+                }`}
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+
+          <p className="text-sm sm:text-base md:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed px-1 animate-fade-in-up" style={{ animationDelay: '0.25s' }}>
             17+ months shipping production AI — real-time vision, RAG, FastAPI products, and secure edge deployments for 50+ enterprise clients under 200&nbsp;ms latency.
           </p>
 
@@ -92,7 +119,7 @@ function Hero({ onContactClick }: HeroProps) {
             <a
               href="#contact"
               onClick={onContactClick}
-              className="group relative px-6 sm:px-8 py-3 bg-gradient-to-r from-sky-500 via-cyan-500 to-teal-500 text-white rounded-xl font-semibold text-sm hover:shadow-lg hover:shadow-cyan-500/30 transition-transform duration-200 hover:scale-[1.03] overflow-hidden w-full xs:w-auto"
+              className="group relative px-6 sm:px-8 py-3.5 min-h-[44px] bg-gradient-to-r from-sky-500 via-cyan-500 to-teal-400 text-white rounded-xl font-semibold text-sm hover:shadow-lg hover:shadow-cyan-500/30 transition-transform duration-200 hover:scale-[1.03] overflow-hidden w-full xs:w-auto"
             >
               <span className="relative z-10 flex items-center justify-center gap-2">
                 Get In Touch
@@ -105,7 +132,7 @@ function Hero({ onContactClick }: HeroProps) {
               href={buildWhatsAppSendUrl(quickHello)}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-6 sm:px-8 py-3 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-xl font-semibold text-sm hover:shadow-lg hover:shadow-emerald-500/25 transition-all duration-200 hover:scale-[1.03] w-full xs:w-auto text-center flex items-center justify-center gap-2"
+              className="px-6 sm:px-8 py-3.5 min-h-[44px] bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-xl font-semibold text-sm hover:shadow-lg hover:shadow-emerald-500/25 transition-all duration-200 hover:scale-[1.03] w-full xs:w-auto text-center flex items-center justify-center gap-2"
             >
               <WhatsAppIcon size={16} />
               WhatsApp
@@ -113,28 +140,32 @@ function Hero({ onContactClick }: HeroProps) {
             <a
               href={RESUME_PDF}
               download={RESUME_FILENAME}
-              className="px-6 sm:px-8 py-3 border border-sky-400/50 text-sky-300 rounded-xl font-semibold text-sm hover:bg-sky-500/10 hover:border-sky-300 transition-all duration-200 hover:scale-[1.03] w-full xs:w-auto text-center flex items-center justify-center gap-2"
+              className="px-6 sm:px-8 py-3.5 min-h-[44px] border border-amber-300/40 text-amber-100 rounded-xl font-semibold text-sm hover:bg-amber-400/10 hover:border-amber-200/60 transition-all duration-200 hover:scale-[1.03] w-full xs:w-auto text-center flex items-center justify-center gap-2"
             >
               Download Resume
             </a>
           </div>
-          <p className="text-[11px] text-slate-500 animate-fade-in-up" style={{ animationDelay: '0.55s' }}>
+          <p className="text-[11px] text-slate-500 animate-fade-in-up px-2" style={{ animationDelay: '0.55s' }}>
             Prefer email?{' '}
-            <a href={buildMailto(quickHello)} className="text-sky-400 hover:text-sky-300 underline-offset-2 hover:underline">
+            <a href={buildMailto(quickHello)} className="text-cyan-300 hover:text-cyan-200 underline-offset-2 hover:underline break-all">
               {EMAIL}
             </a>
             {' · '}
-            <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="text-sky-400 hover:text-sky-300 underline-offset-2 hover:underline">
-              Chat on WhatsApp
+            <a href="#roles" className="text-amber-200/90 hover:text-amber-100 underline-offset-2 hover:underline">
+              Roles I fit
+            </a>
+            {' · '}
+            <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="text-cyan-300 hover:text-cyan-200 underline-offset-2 hover:underline">
+              WhatsApp
             </a>
           </p>
         </div>
       </div>
 
-      <div className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 animate-float">
+      <div className="absolute bottom-4 sm:bottom-8 left-1/2 -translate-x-1/2 animate-float hidden sm:flex">
         <div className="flex flex-col items-center gap-1.5 opacity-70">
-          <span className="text-[10px] uppercase tracking-widest text-sky-400/80 font-medium">Scroll</span>
-          <svg className="w-4 h-4 text-sky-400 animate-bounce" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+          <span className="text-[10px] uppercase tracking-widest text-cyan-300/80 font-medium">Scroll</span>
+          <svg className="w-4 h-4 text-cyan-300 animate-bounce" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
             <path d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
           </svg>
         </div>
