@@ -157,8 +157,8 @@
   }
 
   .safe-float {
-    bottom: calc(1.25rem + var(--safe-bottom));
-    right: calc(1rem + var(--safe-right));
+    bottom: calc(1rem + var(--safe-bottom));
+    right: calc(0.75rem + var(--safe-right));
   }
 
   .scrollbar-thin {

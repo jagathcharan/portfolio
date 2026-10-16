@@ -62,6 +62,10 @@ function AIChat() {
     if (isOpen) inputRef.current?.focus();
   }, [isOpen, contactFlow]);
 
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('portfolio-chat-open', { detail: { open: isOpen } }));
+  }, [isOpen]);
+
   const pushAi = useCallback((text: string, suggestions?: string[]) => {
     setMessages((prev) => [
       ...prev,
@@ -231,19 +235,21 @@ function AIChat() {
 
   if (!isOpen) {
     return (
-      <div className="fixed bottom-[5.5rem] right-4 sm:bottom-28 sm:right-6 z-50 flex items-end gap-3" style={{ marginBottom: 'env(safe-area-inset-bottom, 0px)' }}>
-        <div className="hidden xs:block max-w-[200px] rounded-2xl border border-cyan-500/25 bg-slate-900/95 px-3 py-2.5 shadow-xl shadow-cyan-500/10 backdrop-blur-md">
+      <div
+        className="fixed z-50 right-3 sm:right-6
+          bottom-[calc(1rem+env(safe-area-inset-bottom,0px))] sm:bottom-6
+          flex items-end gap-2"
+      >
+        <div className="hidden md:block max-w-[180px] rounded-2xl border border-cyan-500/25 bg-slate-900/95 px-3 py-2.5 shadow-xl shadow-cyan-500/10 backdrop-blur-md mb-1">
           <p className="text-[11px] font-semibold text-cyan-300 mb-1 flex items-center gap-1">
-            <Sparkles size={12} /> Ask Jagath's assistant
+            <Sparkles size={12} /> Ask Jagath&apos;s assistant
           </p>
-          <p className="text-[10px] text-slate-400 leading-relaxed">
-            Skills · Edge AI · RAG · Contact
-          </p>
+          <p className="text-[10px] text-slate-400 leading-relaxed">Skills · Edge AI · RAG · Contact</p>
         </div>
         <button
           type="button"
           onClick={() => setIsOpen(true)}
-          className="relative bg-gradient-to-br from-sky-500 to-cyan-600 text-white p-3.5 rounded-full shadow-xl shadow-cyan-500/35 hover:shadow-cyan-400/50 transition-transform duration-300 hover:scale-110"
+          className="relative w-12 h-12 sm:w-[3.25rem] sm:h-[3.25rem] inline-flex items-center justify-center bg-gradient-to-br from-sky-500 to-cyan-600 text-white rounded-full shadow-xl shadow-cyan-500/35 hover:scale-105 active:scale-95 transition-transform"
           aria-label="Open portfolio assistant"
         >
           <MessageCircle size={22} />
@@ -256,7 +262,12 @@ function AIChat() {
   return (
     <div
       ref={panelRef}
-      className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 w-[min(100vw-1.5rem,24rem)] h-[min(85vh,36rem)] bg-slate-950/95 rounded-2xl shadow-2xl shadow-cyan-500/15 border border-cyan-500/30 flex flex-col overflow-hidden chat-scale-in backdrop-blur-xl"
+      className="fixed z-50 left-3 right-3 sm:left-auto sm:right-6
+        bottom-[calc(0.75rem+env(safe-area-inset-bottom,0px))] sm:bottom-6
+        w-auto sm:w-[24rem] max-w-md
+        h-[min(78svh,34rem)] sm:h-[min(85vh,36rem)]
+        bg-slate-950/95 rounded-2xl shadow-2xl shadow-cyan-500/15 border border-cyan-500/30
+        flex flex-col overflow-hidden chat-scale-in backdrop-blur-xl"
     >
       <div className="relative px-3.5 py-3 flex items-center justify-between bg-gradient-to-r from-sky-600 via-sky-500 to-cyan-500">
         <div className="flex items-center gap-2.5 min-w-0">

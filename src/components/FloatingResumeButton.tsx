@@ -24,63 +24,69 @@ const quickMessage = {
   message: 'Hello Jagath, I found your portfolio and would like to connect.',
 };
 
+const btn =
+  'inline-flex items-center justify-center w-11 h-11 sm:w-12 sm:h-12 rounded-full text-white shadow-lg transition-transform duration-200 active:scale-95 hover:scale-105';
+
 function FloatingResumeButton() {
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible, setIsVisible] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
 
   useEffect(() => {
-    let lastScrollY = window.scrollY;
-    let ticking = false;
+    const onScroll = () => setIsVisible(window.scrollY > 80);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
-    const handleScroll = () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          const currentScrollY = window.scrollY;
-          const shouldBeVisible = currentScrollY > 100;
-          if (shouldBeVisible !== isVisible || Math.abs(currentScrollY - lastScrollY) > 50) {
-            setIsVisible(shouldBeVisible);
-            lastScrollY = currentScrollY;
-          }
-          ticking = false;
-        });
-        ticking = true;
-      }
+  useEffect(() => {
+    const onChat = (e: Event) => {
+      const detail = (e as CustomEvent<{ open: boolean }>).detail;
+      setChatOpen(Boolean(detail?.open));
     };
+    window.addEventListener('portfolio-chat-open', onChat);
+    return () => window.removeEventListener('portfolio-chat-open', onChat);
+  }, []);
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [isVisible]);
-
-  if (!isVisible) return null;
+  if (!isVisible || chatOpen) return null;
 
   return (
-    <div className="fixed z-40 flex flex-col sm:flex-row items-end sm:items-center gap-2.5 sm:gap-3 safe-float sm:bottom-6 sm:right-28">
+    <div
+      className="fixed z-40 flex items-center gap-2 sm:gap-2.5
+        left-3 bottom-[calc(1rem+env(safe-area-inset-bottom,0px))]
+        sm:left-auto sm:right-[5.5rem] sm:bottom-6
+        px-2 py-2 sm:px-0 sm:py-0
+        rounded-full sm:rounded-none
+        bg-slate-950/80 sm:bg-transparent border border-white/10 sm:border-0
+        backdrop-blur-md sm:backdrop-blur-none shadow-xl sm:shadow-none"
+      aria-label="Quick actions"
+    >
       <a
         href={buildMailto(quickMessage)}
-        className="bg-sky-600 text-white p-3 rounded-full shadow-xl shadow-sky-500/30 hover:shadow-sky-500/50 transition-all duration-300 hover:scale-110 group"
+        className={`${btn} bg-sky-600 shadow-sky-500/30`}
         aria-label="Email Jagath"
         title="Email"
       >
-        <Mail size={20} className="group-hover:scale-110 transition-transform" />
+        <Mail size={18} />
       </a>
       <a
         href={buildWhatsAppSendUrl(quickMessage)}
         target="_blank"
         rel="noopener noreferrer"
-        className="bg-[#25D366] text-white p-3 rounded-full shadow-xl shadow-emerald-500/40 hover:shadow-emerald-500/60 transition-all duration-300 hover:scale-110 group"
+        className={`${btn} bg-[#25D366] shadow-emerald-500/40`}
         aria-label="Message on WhatsApp"
         title="WhatsApp"
       >
-        <WhatsAppIcon size={20} />
+        <WhatsAppIcon size={18} />
       </a>
       <a
         href={RESUME_PDF}
         download={RESUME_FILENAME}
-        className="relative bg-gradient-to-r from-ai-success to-emerald-600 text-white p-3 rounded-full shadow-xl shadow-ai-success/50 hover:shadow-ai-success/70 transition-all duration-300 hover:scale-110 group"
+        className={`${btn} relative bg-gradient-to-r from-emerald-500 to-teal-500 shadow-emerald-500/40`}
         aria-label="Download Resume"
         title="Download Resume"
       >
-        <Download size={20} className="group-hover:scale-110 transition-transform" />
-        <span className="absolute -top-1.5 -right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse" />
+        <Download size={18} />
+        <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-red-500 rounded-full" />
       </a>
     </div>
   );
